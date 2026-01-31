@@ -1,0 +1,12 @@
+# 🧪 Python build and cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.vscode/
+.idea/
+.git/
+.gitignore
+.github/
+docker-compose.yml
+.dockerignore

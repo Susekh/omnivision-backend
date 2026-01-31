@@ -1,0 +1,7 @@
+pymongo
+geopy
+shapely
+fuzzywuzzy
+python-Levenshtein
+boto3== 1.34.162
+pika

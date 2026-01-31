@@ -1,0 +1,151 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Maps in Canvas</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+            cursor: crosshair;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas" width="600" height="450"></canvas>
+    <p id="coords">Click on the map to get coordinates.</p>
+
+    <script>
+        var canvas = document.getElementById('canvas');
+        var ctx = canvas.getContext("2d");
+
+        var img = new Image();
+        img.crossOrigin = "Anonymous";  
+        img.src = "https://maps.googleapis.com/maps/api/staticmap?center=20.2630478,85.800894&zoom=12&size=600x450&maptype=roadmap&key=AIzaSyD5UhOVOjVRlbWPe28WzFTqkXR91IYRUSM";
+
+        img.onload = function() {
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        };
+
+        const topLeft = { lat: 20.4500, lng: 85.6000 };
+        const bottomRight = { lat: 20.0500, lng: 86.0000 };
+
+        function getLatLngFromPixel(x, y) {
+            let lat = topLeft.lat + (y / canvas.height) * (bottomRight.lat - topLeft.lat);
+            let lng = topLeft.lng + (x / canvas.width) * (bottomRight.lng - topLeft.lng);
+            return { lat, lng };
+        }
+
+        function drawPoint(x, y, lat, lng) {
+            ctx.fillStyle = "red";
+            ctx.beginPath();
+            ctx.arc(x, y, 5, 0, Math.PI * 2);
+            ctx.fill();
+            document.getElementById("coords").innerText = `Latitude: ${lat.toFixed(6)}, Longitude: ${lng.toFixed(6)}`;
+        }
+
+        canvas.addEventListener("click", function(event) {
+            var rect = canvas.getBoundingClientRect();
+            var x = event.clientX - rect.left;
+            var y = event.clientY - rect.top;
+
+            let { lat, lng } = getLatLngFromPixel(x, y);
+            drawPoint(x, y, lat, lng);
+        });
+    </script>
+</body>
+</html> -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KIMS Hospital Jurisdiction</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+            cursor: crosshair;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas" width="600" height="450"></canvas>
+    <p id="coords">Jurisdiction around KIMS Hospital, Bhubaneswar</p>
+
+    <script>
+        var canvas = document.getElementById('canvas');
+        var ctx = canvas.getContext("2d");
+
+        // Load Google Static Map
+        var img = new Image();
+        img.crossOrigin = "Anonymous";  
+        img.src = "https://maps.googleapis.com/maps/api/staticmap?center=20.2961,85.8253&zoom=13&size=600x450&maptype=roadmap&key=AIzaSyD5UhOVOjVRlbWPe28WzFTqkXR91IYRUSM";
+
+        img.onload = function() {
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            drawJurisdiction();
+            markHospital();
+        };
+
+        // Approximate map boundaries
+        const topLeft = { lat: 20.4000, lng: 85.7000 };
+        const bottomRight = { lat: 20.2000, lng: 85.9500 };
+
+        // Convert Latitude/Longitude to Pixel Position
+        function latLngToPixel(lat, lng) {
+            let x = ((lng - topLeft.lng) / (bottomRight.lng - topLeft.lng)) * canvas.width;
+            let y = ((lat - topLeft.lat) / (bottomRight.lat - topLeft.lat)) * canvas.height;
+            return { x, y };
+        }
+
+        // Jurisdiction Polygon (Approximate Boundary around KIMS Hospital)
+        const jurisdiction = {
+            "coordinates": [
+                [20.3000, 85.8200],
+                [20.3100, 85.8300],
+                [20.2900, 85.8400],
+                [20.2800, 85.8300],
+                [20.3000, 85.8200] // Closing the polygon
+            ],
+            "type": "Polygon"
+        };
+
+        // KIMS Hospital Location
+        const hospital = { lat: 20.2961, lng: 85.8253 };
+
+        // Draw Jurisdiction Polygon
+        function drawJurisdiction() {
+            ctx.strokeStyle = "blue"; 
+            ctx.fillStyle = "rgba(0, 0, 255, 0.3)"; // Transparent blue
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+
+            jurisdiction.coordinates.forEach((point, index) => {
+                let { x, y } = latLngToPixel(point[0], point[1]);
+
+                if (index === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        // Mark KIMS Hospital
+        function markHospital() {
+            let { x, y } = latLngToPixel(hospital.lat, hospital.lng);
+            ctx.fillStyle = "red";
+            ctx.beginPath();
+            ctx.arc(x, y, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.font = "12px Arial";
+            ctx.fillText("KIMS Hospital", x + 8, y - 8);
+        }
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "pothole": false,
+  "litter": false,
+  "fallen tree": false,
+  "car accident": true,
+  "street light": false,
+  "animal debris": false,
+  "bus accident": true
+}

@@ -1,0 +1,8 @@
+{
+   "pothole":"01",
+    "litter":"02",
+    "fallen tree":"03",
+    "car_accident":"04",
+    "street_light":"05",
+    "animal debris":"06"
+}
