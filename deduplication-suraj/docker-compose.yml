@@ -58,6 +58,8 @@ services:
 
   deduplication_services:
     image: ashpikachu2001/deduplication_services:V1.2
+    env_file:
+    - .env
     container_name: deduplication_services
     depends_on:
       rabbitmq:
