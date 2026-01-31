@@ -74,7 +74,8 @@ class MinIOStorage:
             's3',
             endpoint_url=endpoint_url,
             aws_access_key_id=access_key,
-            aws_secret_access_key=secret_key
+            aws_secret_access_key=secret_key,
+            region_name="auto"
         )
         self.bucket_name = bucket_name
         self.endpoint_url = endpoint_url
@@ -105,7 +106,7 @@ class MinIOStorage:
                 ExtraArgs={'ContentType': 'image/jpeg'}
             )
             
-            image_url = f"{self.endpoint_url}/{BUCKET_NAME}/{filename}"
+            image_url = f"{self.endpoint_url}/{self.bucket_name}/{filename}"
             print(f"✅ Image uploaded successfully: {image_url}")
             return image_url
         except Exception as e:
