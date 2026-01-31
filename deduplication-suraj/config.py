@@ -12,6 +12,7 @@ MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY", "minioadmin")
 MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY", "minioadmin")
 BUCKET_NAME = os.getenv("BUCKET_NAME", "billion-eyes-images")
 
+
 # MongoDB Configuration
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://mongodb:27017") #mongodb://host.docker.internal:27017
 MONGO_DB = os.getenv("MONGO_DB", "BillionEyes_V1")
