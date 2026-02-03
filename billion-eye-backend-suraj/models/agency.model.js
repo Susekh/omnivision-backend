@@ -6,11 +6,9 @@ const AWS = require("aws-sdk");
 const jwt = require("jsonwebtoken");
 const JWT_SECRET = process.env.JWT_SECRET || "your_secret_key"; // Use a secure secret key
 const JWT_EXPIRATION = "1h"; // Token expiration time (e.g., 1 hour)
-const sharp = require('sharp');
+const sharp = require("sharp");
 // MongoDB client setup
 const client = new MongoClient(uri);
-
-
 
 // AWS S3 setup
 const s3 = new AWS.S3({
@@ -20,9 +18,9 @@ const s3 = new AWS.S3({
   region: process.env.AWS_REGION, // Add this line
   s3ForcePathStyle: true,
   signatureVersion: "v4",
-  httpOptions:{
-    timeout:200
-  }
+  httpOptions: {
+    timeout: 200,
+  },
 });
 
 // Helper functions to get MongoDB collections
@@ -51,8 +49,14 @@ async function getGroundStaffCollection() {
 
 // Agency Model
 const AgencyModel = {
-
-  async createAgencyInDB(AgencyName, mobileNumber, password, location = {}, eventResponsibleFor = [], jurisdiction = null) {
+  async createAgencyInDB(
+    AgencyName,
+    mobileNumber,
+    password,
+    location,
+    eventResponsibleFor = [],
+    jurisdiction = null,
+  ) {
     console.log("[createAgencyInDB] Function called with parameters:", {
       AgencyName,
       mobileNumber,
@@ -60,118 +64,103 @@ const AgencyModel = {
       eventResponsibleFor,
       jurisdiction,
     });
-  
+
+    // -------------------------
     // Validate mobile number
+    // -------------------------
     if (!/^\d{10}$/.test(mobileNumber)) {
-      console.error("[createAgencyInDB] Invalid mobile number:", mobileNumber);
       throw new Error("Invalid mobile number. Must be exactly 10 digits.");
     }
-  
-    // Hash the password
-    console.log("[createAgencyInDB] Hashing password...");
-    const hashedPassword = await bcrypt.hash(password, 10);
-    console.log("[createAgencyInDB] Password hashed successfully.");
-  
-    // Generate AgencyId
-    const AgencyId = `agency-${Math.floor(1000 + Math.random() * 9000)}`;
-    console.log("[createAgencyInDB] Generated AgencyId:", AgencyId);
-  
-    // Validate location
-    if (location && (location.latitude !== undefined || location.longitude !== undefined)) {
-      console.log("[createAgencyInDB] Validating location:", location);
-      if (
-        typeof location.latitude !== "number" ||
-        typeof location.longitude !== "number"
-      ) {
-        console.error("[createAgencyInDB] Invalid location:", location);
-        throw new Error("Invalid location. Latitude and Longitude must be numbers.");
-      }
+
+    // -------------------------
+    // Validate location (MANDATORY)
+    // -------------------------
+    if (
+      !location ||
+      typeof location.latitude !== "number" ||
+      typeof location.longitude !== "number"
+    ) {
+      throw new Error(
+        "Location is required and must contain numeric latitude and longitude",
+      );
     }
 
+    // -------------------------
     // Validate eventResponsibleFor
+    // -------------------------
     if (!Array.isArray(eventResponsibleFor)) {
-      throw new Error("eventResponsibleFor must be an array of strings");
+      throw new Error("eventResponsibleFor must be an array");
     }
 
-    // Prepare GeoJSON for location (if provided)
-    let locationGeo = null;
-    if (location && location.latitude !== undefined && location.longitude !== undefined) {
-      locationGeo = {
-        type: "Point",
-        coordinates: [Number(location.longitude), Number(location.latitude)], // GeoJSON expects [lng, lat]
+    // -------------------------
+    // Hash password
+    // -------------------------
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // -------------------------
+    // Generate AgencyId
+    // -------------------------
+    const AgencyId = `agency-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    // -------------------------
+    // Optional jurisdiction (stored AS-IS)
+    // -------------------------
+    let jurisdictionGeo = null;
+
+    if (jurisdiction) {
+      if (
+        jurisdiction.type !== "Polygon" ||
+        !Array.isArray(jurisdiction.coordinates)
+      ) {
+        throw new Error("Invalid jurisdiction format");
+      }
+
+      jurisdiction.coordinates.forEach((pair) => {
+        if (
+          !Array.isArray(pair) ||
+          pair.length !== 2 ||
+          typeof pair[0] !== "number" ||
+          typeof pair[1] !== "number"
+        ) {
+          throw new Error("Invalid coordinate pair in jurisdiction");
+        }
+      });
+
+      jurisdictionGeo = {
+        type: "Polygon",
+        coordinates: jurisdiction.coordinates, // [lat, lng] flat array
       };
     }
 
-    // Validate and normalize jurisdiction GeoJSON (if provided)
-    let jurisdictionGeo = null;
-    if (jurisdiction) {
-      if (!jurisdiction.type || !jurisdiction.coordinates) {
-        throw new Error("Invalid jurisdiction GeoJSON");
-      }
-
-      // Normalize coordinates to [lng, lat] pairs if they're provided as [lat, lng]
-      try {
-        const coords = jurisdiction.coordinates;
-        // Expecting a Polygon - coordinates[0] is ring
-        jurisdictionGeo = {
-          type: jurisdiction.type,
-          coordinates: coords.map((ring) =>
-            ring.map((pair) => {
-              if (pair.length !== 2) throw new Error("Invalid coordinate pair in jurisdiction");
-              const [a, b] = pair;
-              // Heuristic: if lat looks like  -90..90 and lon looks like -180..180
-              if (Math.abs(a) <= 90 && Math.abs(b) <= 180) {
-                // assume [lat, lng] -> convert
-                return [Number(b), Number(a)];
-              }
-              return [Number(a), Number(b)];
-            })
-          ),
-        };
-      } catch (err) {
-        console.error("[createAgencyInDB] Jurisdiction normalization failed:", err.message);
-        throw new Error("Invalid jurisdiction coordinates");
-      }
-    }
-
-    // Determine agency type
-    const type = jurisdictionGeo ? "jurisdiction" : "location";
-
+    // -------------------------
     // Prepare agency object
+    // -------------------------
     const agency = {
       AgencyId,
       AgencyName,
       mobileNumber,
       password: hashedPassword,
+
       location: {
-        latitude: location.latitude || null,
-        longitude: location.longitude || null,
+        latitude: location.latitude,
+        longitude: location.longitude,
       },
-      locationGeo,
-      eventResponsibleFor: eventResponsibleFor || [],
-      jurisdiction: jurisdictionGeo,
-      type,
+      jurisdiction: jurisdictionGeo, // optional
+
+      eventResponsibleFor,
       createdAt: new Date(),
     };
+
     console.log("[createAgencyInDB] Agency object prepared:", agency);
-  
+
+    // -------------------------
+    // Insert into DB
+    // -------------------------
     try {
-      // Insert agency into the database
-      console.log("[createAgencyInDB] Connecting to agency collection...");
       const agencyCollection = await getAgencyCollection();
 
-      // Ensure indexes for geo queries
-      await agencyCollection.createIndex({ locationGeo: "2dsphere" });
-      await agencyCollection.createIndex({ jurisdiction: "2dsphere" });
+      const result = await agencyCollection.insertOne(agency);
 
-      console.log("[createAgencyInDB] Inserting agency into the database...");
-      const insertResult = await agencyCollection.insertOne(agency);
-  
-      console.log("[createAgencyInDB] New agency inserted successfully:", {
-        AgencyId,
-        insertedId: insertResult.insertedId,
-      });
-  
       return AgencyId;
     } catch (err) {
       console.error("[createAgencyInDB] Database Insert Error:", err);
@@ -179,71 +168,93 @@ const AgencyModel = {
     }
   },
 
-
   async agencyLogin(mobileNumber, password) {
-    console.log("[agencyLogin] Function called with parameters:", {
-      mobileNumber,
-    });
+    console.log("[agencyLogin] Login attempt:", { mobileNumber });
+
+    // -------------------------
+    // Basic validation
+    // -------------------------
+    if (!/^\d{10}$/.test(mobileNumber)) {
+      throw new Error("Invalid mobile number or password.");
+    }
+
+    if (!password || typeof password !== "string") {
+      throw new Error("Invalid mobile number or password.");
+    }
 
     try {
-      // Validate mobile number
-      if (!/^\d{10}$/.test(mobileNumber)) {
-        console.error("[agencyLogin] Invalid mobile number:", mobileNumber);
-        throw new Error("Invalid mobile number. Must be exactly 10 digits.");
-      }
-
-      // Connect to the agency collection
-      console.log("[agencyLogin] Connecting to agency collection...");
       const agencyCollection = await getAgencyCollection();
 
-      // Find the agency by mobile number
-      console.log("[agencyLogin] Searching for agency with mobile number:", mobileNumber);
       const agency = await agencyCollection.findOne({ mobileNumber });
 
-      if (!agency) {
-        console.error("[agencyLogin] No agency found with mobile number:", mobileNumber);
+      // Do NOT reveal whether user exists
+      if (!agency || !agency.password) {
         throw new Error("Invalid mobile number or password.");
       }
 
-      // Compare the provided password with the hashed password
-      console.log("[agencyLogin] Comparing passwords...");
-      const isPasswordValid = await bcrypt.compare(password, agency.password);
+      // -------------------------
+      // Password verification
+      // -------------------------
+      let isPasswordValid = false;
+
+      // Normal case: bcrypt hash
+      if (agency.password.startsWith("$2")) {
+        isPasswordValid = await bcrypt.compare(password, agency.password);
+      } else {
+        // SAFETY NET (for old bad data)
+        isPasswordValid = agency.password === password;
+
+        // OPTIONAL: auto-fix bad stored password
+        if (isPasswordValid) {
+          const hashed = await bcrypt.hash(password, 10);
+          await agencyCollection.updateOne(
+            { AgencyId: agency.AgencyId },
+            { $set: { password: hashed } },
+          );
+        }
+      }
 
       if (!isPasswordValid) {
-        console.error("[agencyLogin] Invalid password for mobile number:", mobileNumber);
         throw new Error("Invalid mobile number or password.");
       }
 
-      console.log("[agencyLogin] Login successful for AgencyId:", agency.AgencyId);
-
-      // Generate JWT token
+      // -------------------------
+      // Generate JWT
+      // -------------------------
       const token = jwt.sign(
-        { AgencyId: agency.AgencyId, mobileNumber: agency.mobileNumber },
+        {
+          AgencyId: agency.AgencyId,
+          mobileNumber: agency.mobileNumber,
+          role: "agency",
+          v: 1, // token version
+        },
         JWT_SECRET,
-        { expiresIn: JWT_EXPIRATION }
+        { expiresIn: JWT_EXPIRATION },
       );
 
-      console.log("[agencyLogin] Token generated successfully.");
-
-      // Return agency details and token
+      // -------------------------
+      // Success response
+      // -------------------------
       return {
         success: true,
-        message: "Login successful.",
-        token, // Include the token in the response
+        message: "Login successful",
+        token,
         agency: {
           AgencyId: agency.AgencyId,
           AgencyName: agency.AgencyName,
           mobileNumber: agency.mobileNumber,
           location: agency.location,
+          jurisdiction: agency.jurisdiction || null,
           createdAt: agency.createdAt,
         },
       };
     } catch (err) {
       console.error("[agencyLogin] Error:", err.message);
-      throw new Error(err.message || "Failed to login.");
+
+      // Always return generic auth error
+      throw new Error("Invalid mobile number or password.");
     }
   },
-
   async logout(token) {
     try {
       // Invalidate the token (optional: store invalidated tokens in a blacklist)
@@ -269,28 +280,28 @@ const AgencyModel = {
       address,
       agencyId, // Include agencyId in the log
     });
-  
+
     // Validate input
     if (!name || typeof name !== "string") {
       console.error("[addGroundStaff] Invalid name:", name);
       throw new Error("Invalid name. Name must be a non-empty string.");
     }
-  
+
     if (!/^\d{10}$/.test(number)) {
       console.error("[addGroundStaff] Invalid number:", number);
       throw new Error("Invalid number. Must be exactly 10 digits.");
     }
-  
+
     if (!address || typeof address !== "string") {
       console.error("[addGroundStaff] Invalid address:", address);
       throw new Error("Invalid address. Address must be a non-empty string.");
     }
-  
+
     if (!agencyId || typeof agencyId !== "string") {
       console.error("[addGroundStaff] Invalid agencyId:", agencyId);
       throw new Error("Invalid agencyId. AgencyId must be a non-empty string.");
     }
-  
+
     const groundStaff = {
       name,
       number,
@@ -298,18 +309,20 @@ const AgencyModel = {
       agencyId, // Include agencyId in the groundStaff object
       createdAt: new Date(),
     };
-  
+
     try {
       console.log("[addGroundStaff] Connecting to ground staff collection...");
       const groundStaffCollection = await getGroundStaffCollection();
-  
-      console.log("[addGroundStaff] Inserting ground staff into the database...");
+
+      console.log(
+        "[addGroundStaff] Inserting ground staff into the database...",
+      );
       const insertResult = await groundStaffCollection.insertOne(groundStaff);
-  
+
       console.log("[addGroundStaff] Ground staff added successfully:", {
         insertedId: insertResult.insertedId,
       });
-  
+
       return {
         success: true,
         message: "Ground staff added successfully.",
@@ -323,28 +336,37 @@ const AgencyModel = {
 
   async getGroundStaffByAgencyId(agencyId) {
     try {
-      console.log("[getGroundStaffByAgencyId] Fetching ground staff for agencyId:", agencyId);
-        
+      console.log(
+        "[getGroundStaffByAgencyId] Fetching ground staff for agencyId:",
+        agencyId,
+      );
+
       // Validate agencyId
       if (!agencyId || typeof agencyId !== "string" || agencyId.trim() === "") {
-        throw new Error("Invalid agencyId. AgencyId must be a non-empty string.");
+        throw new Error(
+          "Invalid agencyId. AgencyId must be a non-empty string.",
+        );
       }
-  
+
       // Connect to the ground_staff collection
       const groundStaffCollection = await getGroundStaffCollection();
-  
+
       // Query the collection for ground staff with the given agencyId
-      const groundStaff = await groundStaffCollection.find({ agencyId }).toArray();
-  
-      console.log("[getGroundStaffByAgencyId] Found ground staff:", groundStaff);
-  
+      const groundStaff = await groundStaffCollection
+        .find({ agencyId })
+        .toArray();
+
+      console.log(
+        "[getGroundStaffByAgencyId] Found ground staff:",
+        groundStaff,
+      );
+
       return groundStaff;
     } catch (error) {
       console.error("[getGroundStaffByAgencyId] Error:", error.message);
       throw new Error("Failed to fetch ground staff by agency ID.");
     }
   },
-
 
   async getAgencyDashboardCheck(agencyId) {
     try {
@@ -357,7 +379,7 @@ const AgencyModel = {
         .collection("agencies")
         .findOne(
           { AgencyId: agencyId },
-          { projection: { AgencyName: 1, AgencyId: 1, _id: 0 } }
+          { projection: { AgencyName: 1, AgencyId: 1, _id: 0 } },
         );
 
       if (!agency) throw new Error("Agency not found.");
@@ -395,14 +417,15 @@ const AgencyModel = {
         assignedEvents.map(async (event) => {
           const firstIncident = event.incidents?.[0] || null;
 
-          let originalImageUrl = firstIncident?.image_url || event.image_url || null;
+          let originalImageUrl =
+            firstIncident?.image_url || event.image_url || null;
           let proxyImageUrl = originalImageUrl;
 
           if (originalImageUrl) {
             try {
               const urlParts = new URL(originalImageUrl);
               const pathSegments = urlParts.pathname.split("/").filter(Boolean);
-            
+
               if (pathSegments.length >= 3) {
                 const year = pathSegments[1];
                 const filename = pathSegments.slice(2).join("/");
@@ -410,7 +433,7 @@ const AgencyModel = {
                   Bucket: "billion-eyes-images",
                   Key: `${year}/${filename}`,
                 };
-            
+
                 try {
                   const data = await s3.getObject(params).promise();
                   if (data && data.Body) {
@@ -418,18 +441,26 @@ const AgencyModel = {
                   }
                 } catch (err) {
                   if (err.code === "NoSuchBucket") {
-                    console.error(`[ERROR] S3 Bucket does not exist: ${params.Bucket}`);
+                    console.error(
+                      `[ERROR] S3 Bucket does not exist: ${params.Bucket}`,
+                    );
                   } else {
-                    console.error(`[ERROR] S3 getObject failed: ${err.message}`);
+                    console.error(
+                      `[ERROR] S3 getObject failed: ${err.message}`,
+                    );
                   }
                 }
               }
             } catch (err) {
-              console.warn(`[WARN] Invalid originalImageUrl format: ${originalImageUrl}`, err.message);
+              console.warn(
+                `[WARN] Invalid originalImageUrl format: ${originalImageUrl}`,
+                err.message,
+              );
             }
           }
 
-          let boundingBoxes = firstIncident?.bounding_boxes || event.bounding_boxes || [];
+          let boundingBoxes =
+            firstIncident?.bounding_boxes || event.bounding_boxes || [];
           if (!Array.isArray(boundingBoxes)) boundingBoxes = [];
           const [x1, y1, x2, y2] = boundingBoxes[0] || [];
 
@@ -439,10 +470,15 @@ const AgencyModel = {
               const [ix1, iy1, ix2, iy2] = incidentBoundingBoxes[0] || [];
               let incidentProxyImageUrl = incident.image_url || null;
 
-              if (incidentProxyImageUrl && incidentProxyImageUrl.startsWith("http")) {
+              if (
+                incidentProxyImageUrl &&
+                incidentProxyImageUrl.startsWith("http")
+              ) {
                 try {
                   const urlParts = new URL(incidentProxyImageUrl);
-                  const pathSegments = urlParts.pathname.split("/").filter(Boolean);
+                  const pathSegments = urlParts.pathname
+                    .split("/")
+                    .filter(Boolean);
 
                   if (pathSegments.length >= 3) {
                     const year = pathSegments[1];
@@ -471,23 +507,34 @@ const AgencyModel = {
                 x2: ix2,
                 y2: iy2,
               };
-            })
+            }),
           );
 
           return {
             event_id: event.event_id,
             description: event.description,
             status: event.status,
-            assignment_time: firstIncident?.timestamp?.$date || event.assignment_time || null,
-            latitude: firstIncident?.location?.coordinates?.[1] || event.location?.coordinates?.[1] || null,
-            longitude: firstIncident?.location?.coordinates?.[0] || event.location?.coordinates?.[0] || null,
+            assignment_time:
+              firstIncident?.timestamp?.$date || event.assignment_time || null,
+            latitude:
+              firstIncident?.location?.coordinates?.[1] ||
+              event.location?.coordinates?.[1] ||
+              null,
+            longitude:
+              firstIncident?.location?.coordinates?.[0] ||
+              event.location?.coordinates?.[0] ||
+              null,
             image_url: proxyImageUrl,
             ground_staff: event.ground_staff || [],
             incidentID: event.incidentID || null,
             userId: event.userId || null,
             exif: event.exif || null,
-            timestamp: event.timestamp instanceof Date ? event.timestamp.toISOString() : event.timestamp,
-            assigned_agency: event.assigned_agency || event.assigned_agencies || null,
+            timestamp:
+              event.timestamp instanceof Date
+                ? event.timestamp.toISOString()
+                : event.timestamp,
+            assigned_agency:
+              event.assigned_agency || event.assigned_agencies || null,
             boundingBoxes,
             x1,
             y1,
@@ -495,7 +542,7 @@ const AgencyModel = {
             y2,
             allIncidents,
           };
-        })
+        }),
       );
 
       return {
@@ -509,34 +556,24 @@ const AgencyModel = {
     }
   },
 
-
-
-// Assuming 's3' is already initialized (e.g., const AWS = require('aws-sdk'); const s3 = new AWS.S3();)
-// And 'client' for MongoDB is also initialized.
-
-
-
-
-
-
-
-
+  // Assuming 's3' is already initialized (e.g., const AWS = require('aws-sdk'); const s3 = new AWS.S3();)
+  // And 'client' for MongoDB is also initialized.
 
   // async updateEventStatus(event_id, newStatus, groundStaffName = null) {
   //   try {
   //     const eventCollection = await this.getEventsCollection();
-  
+
   //     // Prepare the update object
   //     const updateFields = { status: newStatus };
   //     if (newStatus === "Assigned" && groundStaffName) {
   //       updateFields.ground_staff = groundStaffName; // Add ground_staff name if status is "Assigned"
   //     }
-  
+
   //     const result = await eventCollection.updateOne(
   //       { event_id: event_id },
   //       { $set: updateFields }
   //     );
-  
+
   //     return result;
   //   } catch (error) {
   //     console.error("[updateEventStatus] Database Error:", error);
@@ -544,43 +581,56 @@ const AgencyModel = {
   //   }
   // },
 
-  async updateEventStatus(event_id, newStatus, groundStaffName = null, assignmentTime = null) {
-  try {
-    const eventCollection = await this.getEventsCollection();
+  async updateEventStatus(
+    event_id,
+    newStatus,
+    groundStaffName = null,
+    assignmentTime = null,
+  ) {
+    try {
+      const eventCollection = await this.getEventsCollection();
 
-    // Prepare the update object
-    const updateFields = { status: newStatus };
-    if (newStatus === "Assigned" && groundStaffName) {
-      updateFields.ground_staff = groundStaffName; // Add ground_staff name if status is "Assigned"
-      updateFields.assignment_time = assignmentTime || new Date(); // Add assignment_time
+      // Prepare the update object
+      const updateFields = { status: newStatus };
+      if (newStatus === "Assigned" && groundStaffName) {
+        updateFields.ground_staff = groundStaffName; // Add ground_staff name if status is "Assigned"
+        updateFields.assignment_time = assignmentTime || new Date(); // Add assignment_time
+      }
+
+      const result = await eventCollection.updateOne(
+        { event_id: event_id },
+        { $set: updateFields },
+      );
+
+      return result;
+    } catch (error) {
+      console.error("[updateEventStatus] Database Error:", error);
+      throw new Error("Database Error");
     }
-
-    const result = await eventCollection.updateOne(
-      { event_id: event_id },
-      { $set: updateFields }
-    );
-
-    return result;
-  } catch (error) {
-    console.error("[updateEventStatus] Database Error:", error);
-    throw new Error("Database Error");
-  }
-},
+  },
 
   async getEventById(event_id) {
     try {
       const eventCollection = await this.getEventsCollection();
       return await eventCollection.findOne(
         { event_id: event_id },
-        { projection: { status: 1, _id: 0, incidents: 1 , description: 1 , timestamp:1 ,image_url : 1 , location : 1} }
+        {
+          projection: {
+            status: 1,
+            _id: 0,
+            incidents: 1,
+            description: 1,
+            timestamp: 1,
+            image_url: 1,
+            location: 1,
+          },
+        },
       );
     } catch (error) {
       console.error("[getEventById] Database Error:", error);
       throw new Error("Database Error");
     }
   },
-
-
 
   async getEventsCollection() {
     if (!client.topology || !client.topology.isConnected()) {
@@ -616,7 +666,9 @@ const AgencyModel = {
             }
           }
 
-          const boxes = Array.isArray(incident.bounding_boxes) ? incident.bounding_boxes : [];
+          const boxes = Array.isArray(incident.bounding_boxes)
+            ? incident.bounding_boxes
+            : [];
           const [x1, y1, x2, y2] = boxes[0] || [null, null, null, null];
 
           return {
@@ -630,7 +682,7 @@ const AgencyModel = {
             x2,
             y2,
           };
-        })
+        }),
       );
     } catch (error) {
       console.error("Unexpected error in getIncidentImages:", error.message);
@@ -638,148 +690,170 @@ const AgencyModel = {
     }
   },
 
-  async getEventReportId(event_id, fields = [], includeImageUrl = true, currentAgencyId = null) {
+  async getEventReportId(
+    event_id,
+    fields = [],
+    includeImageUrl = true,
+    currentAgencyId = null,
+  ) {
     try {
-        const eventCollection = await this.getEventsCollection();
+      const eventCollection = await this.getEventsCollection();
 
-        const projection = {
-            event_id: 1,
-            assignment_time: 1,
-            description: 1,
-            ground_staff: 1,
-            location: 1,
-            assigned_agency: 1,
-            bounding_boxes: 1,
-            ...fields.reduce((acc, field) => ({ ...acc, [field]: 1 }), {}),
-        };
+      const projection = {
+        event_id: 1,
+        assignment_time: 1,
+        description: 1,
+        ground_staff: 1,
+        location: 1,
+        assigned_agency: 1,
+        bounding_boxes: 1,
+        ...fields.reduce((acc, field) => ({ ...acc, [field]: 1 }), {}),
+      };
 
-        const pipeline = [
-    { $match: { event_id } },
-    {
-        $addFields: {
+      const pipeline = [
+        { $match: { event_id } },
+        {
+          $addFields: {
             firstIncident: { $arrayElemAt: ["$incidents", 0] },
+          },
         },
-    },
-    {
-        $lookup: {
+        {
+          $lookup: {
             from: "agencies",
             localField: "assigned_agency.agencies",
             foreignField: "AgencyId",
             as: "assignedAgencyDetails",
+          },
         },
-    },
-    {
-        $project: {
+        {
+          $project: {
             ...projection,
-            latitude: { $arrayElemAt: ["$firstIncident.location.coordinates", 1] },
-            longitude: { $arrayElemAt: ["$firstIncident.location.coordinates", 0] },
+            latitude: {
+              $arrayElemAt: ["$firstIncident.location.coordinates", 1],
+            },
+            longitude: {
+              $arrayElemAt: ["$firstIncident.location.coordinates", 0],
+            },
             incidents: {
-                $map: {
-                    input: "$incidents",
-                    as: "incident",
-                    in: {
-                        latitude: { $arrayElemAt: ["$$incident.location.coordinates", 1] },
-                        longitude: { $arrayElemAt: ["$$incident.location.coordinates", 0] },
-                        timestamp: "$$incident.timestamp",
-                        image_url: "$$incident.image_url",
-                        boundingBoxes: "$$incident.bounding_boxes",
-                    },
+              $map: {
+                input: "$incidents",
+                as: "incident",
+                in: {
+                  latitude: {
+                    $arrayElemAt: ["$$incident.location.coordinates", 1],
+                  },
+                  longitude: {
+                    $arrayElemAt: ["$$incident.location.coordinates", 0],
+                  },
+                  timestamp: "$$incident.timestamp",
+                  image_url: "$$incident.image_url",
+                  boundingBoxes: "$$incident.bounding_boxes",
                 },
+              },
             },
             assignedAgency: {
-                $ifNull: [{ $arrayElemAt: ["$assignedAgencyDetails.AgencyName", 0] }, null],
+              $ifNull: [
+                { $arrayElemAt: ["$assignedAgencyDetails.AgencyName", 0] },
+                null,
+              ],
             },
             AgencyId: {
-                $ifNull: [{ $arrayElemAt: ["$assignedAgencyDetails.AgencyId", 0] }, null],
+              $ifNull: [
+                { $arrayElemAt: ["$assignedAgencyDetails.AgencyId", 0] },
+                null,
+              ],
             },
+          },
         },
-    },
-];
+      ];
 
-        const eventData = await eventCollection.aggregate(pipeline).toArray();
-        if (eventData.length === 0) {
-            console.warn("No event found for event_id:", event_id);
-            return null;
-        }
+      const eventData = await eventCollection.aggregate(pipeline).toArray();
+      if (eventData.length === 0) {
+        console.warn("No event found for event_id:", event_id);
+        return null;
+      }
 
-        const event = eventData[0];
+      const event = eventData[0];
 
-        // Validate currentAgencyId
-        if (currentAgencyId && !event.assigned_agency.agencies.includes(currentAgencyId)) {
-            throw new Error("Agency mismatch: The current agency is not assigned to this event.");
-        }
+      // Validate currentAgencyId
+      if (
+        currentAgencyId &&
+        !event.assigned_agency.agencies.includes(currentAgencyId)
+      ) {
+        throw new Error(
+          "Agency mismatch: The current agency is not assigned to this event.",
+        );
+      }
 
-        const firstIncident = event.incidents?.[0] || null;
+      const firstIncident = event.incidents?.[0] || null;
 
-        let imageUrl = firstIncident?.image_url || event.image_url;
+      let imageUrl = firstIncident?.image_url || event.image_url;
 
-        if (includeImageUrl && imageUrl) {
-            try {
-                const urlParts = new URL(imageUrl);
-                const pathSegments = urlParts.pathname.split("/").filter(Boolean);
+      if (includeImageUrl && imageUrl) {
+        try {
+          const urlParts = new URL(imageUrl);
+          const pathSegments = urlParts.pathname.split("/").filter(Boolean);
 
-                if (pathSegments.length >= 3) {
-                    const year = pathSegments[1];
-                    const filename = pathSegments.slice(2).join("/");
+          if (pathSegments.length >= 3) {
+            const year = pathSegments[1];
+            const filename = pathSegments.slice(2).join("/");
 
-                    const params = {
-                        Bucket: "billion-eyes-images",
-                        Key: `${year}/${filename}`,
-                    };
+            const params = {
+              Bucket: "billion-eyes-images",
+              Key: `${year}/${filename}`,
+            };
 
-                    const data = await s3.getObject(params).promise();
-                    if (data && data.Body) {
-                        imageUrl = `data:image/jpeg;base64,${data.Body.toString("base64")}`;
-                    }
-                }
-            } catch (error) {
-                console.warn("Image fetch failed:", error.message);
-                imageUrl = firstIncident?.image_url || event.image_url;
+            const data = await s3.getObject(params).promise();
+            if (data && data.Body) {
+              imageUrl = `data:image/jpeg;base64,${data.Body.toString("base64")}`;
             }
-        } else {
-            imageUrl = null;
+          }
+        } catch (error) {
+          console.warn("Image fetch failed:", error.message);
+          imageUrl = firstIncident?.image_url || event.image_url;
         }
+      } else {
+        imageUrl = null;
+      }
 
-        event.image_url = imageUrl;
+      event.image_url = imageUrl;
 
-        const boundingBoxes = firstIncident?.boundingBoxes || [];
-        event.boundingBoxes = boundingBoxes;
+      const boundingBoxes = firstIncident?.boundingBoxes || [];
+      event.boundingBoxes = boundingBoxes;
 
-        if (boundingBoxes.length > 0 && Array.isArray(boundingBoxes[0])) {
-            const [x1, y1, x2, y2] = boundingBoxes[0];
-            event.x1 = x1;
-            event.y1 = y1;
-            event.x2 = x2;
-            event.y2 = y2;
-        } else {
-            event.x1 = event.y1 = event.x2 = event.y2 = null;
-        }
+      if (boundingBoxes.length > 0 && Array.isArray(boundingBoxes[0])) {
+        const [x1, y1, x2, y2] = boundingBoxes[0];
+        event.x1 = x1;
+        event.y1 = y1;
+        event.x2 = x2;
+        event.y2 = y2;
+      } else {
+        event.x1 = event.y1 = event.x2 = event.y2 = null;
+      }
 
-        if (currentAgencyId) {
-            event.AgencyId = currentAgencyId;
-        }
+      if (currentAgencyId) {
+        event.AgencyId = currentAgencyId;
+      }
 
-        return {
-            success: true,
-            assignments_time: firstIncident?.timestamp || null,
-            event_id: event.event_id,
-            description: event.description,
-            ground_staff: event.ground_staff || null,
-            latitude: firstIncident?.latitude || null,
-            longitude: firstIncident?.longitude || null,
-            image_url: event.image_url,
-            assignedAgency: event.assignedAgency || null,
-            
-            AgencyId: event.AgencyId || null,
-        };
+      return {
+        success: true,
+        assignments_time: firstIncident?.timestamp || null,
+        event_id: event.event_id,
+        description: event.description,
+        ground_staff: event.ground_staff || null,
+        latitude: firstIncident?.latitude || null,
+        longitude: firstIncident?.longitude || null,
+        image_url: event.image_url,
+        assignedAgency: event.assignedAgency || null,
+
+        AgencyId: event.AgencyId || null,
+      };
     } catch (err) {
-        console.error("[getEventReportId] Database Error:", err);
-        throw new Error("Database Error");
+      console.error("[getEventReportId] Database Error:", err);
+      throw new Error("Database Error");
     }
-}
-,
-
-// Additional helpers for agencies
+  },
+  // Additional helpers for agencies
 
   async findAgencyByAgencyId(AgencyId) {
     if (!AgencyId) throw new Error("AgencyId required");
@@ -794,38 +868,103 @@ const AgencyModel = {
 
   async updatePassword(AgencyId, hashedPassword) {
     const col = await getAgencyCollection();
-    const res = await col.updateOne({ AgencyId }, { $set: { password: hashedPassword } });
+    const res = await col.updateOne(
+      { AgencyId },
+      { $set: { password: hashedPassword } },
+    );
     return res.modifiedCount > 0;
   },
 
   async updateAgency(AgencyId, updates = {}) {
     if (!AgencyId) throw new Error("AgencyId required");
+
     const col = await getAgencyCollection();
 
-    // Normalize jurisdiction if present
-    if (updates.jurisdiction) {
-      const j = updates.jurisdiction;
-      updates.jurisdiction = {
-        type: j.type,
-        coordinates: j.coordinates.map((ring) => ring.map((pair) => {
-          const [a, b] = pair;
-          if (Math.abs(a) <= 90 && Math.abs(b) <= 180) return [Number(b), Number(a)];
-          return [Number(a), Number(b)];
-        }))
+    const $set = {};
+    const $unset = {};
+
+    // -------------------------
+    // Agency name
+    // -------------------------
+    if (typeof updates.AgencyName === "string") {
+      $set.AgencyName = updates.AgencyName;
+    }
+
+    // -------------------------
+    // Mobile number
+    // -------------------------
+    if (updates.mobileNumber) {
+      if (!/^\d{10}$/.test(updates.mobileNumber)) {
+        throw new Error("Invalid mobile number");
+      }
+      $set.mobileNumber = updates.mobileNumber;
+    }
+
+    // -------------------------
+    // Events
+    // -------------------------
+    if (Array.isArray(updates.eventResponsibleFor)) {
+      $set.eventResponsibleFor = updates.eventResponsibleFor;
+    }
+
+    // -------------------------
+    // Password (HASHED)
+    // -------------------------
+    if (updates.password) {
+      $set.password = await bcrypt.hash(updates.password, 10);
+    }
+
+    // -------------------------
+    // Location (lat/lng → location)
+    // -------------------------
+    if (typeof updates.lat === "number" && typeof updates.lng === "number") {
+      $set.location = {
+        latitude: Number(updates.lat),
+        longitude: Number(updates.lng),
       };
-      updates.type = "jurisdiction";
     }
 
-    // Update location and GeoJSON
-    if (updates.location && updates.location.latitude !== undefined && updates.location.longitude !== undefined) {
-      updates.locationGeo = { type: "Point", coordinates: [Number(updates.location.longitude), Number(updates.location.latitude)] };
-      updates.type = updates.type || "location";
+    // -------------------------
+    // Jurisdiction (OPTIONAL)
+    // -------------------------
+    if (updates.jurisdiction) {
+      if (
+        updates.jurisdiction.type !== "Polygon" ||
+        !Array.isArray(updates.jurisdiction.coordinates)
+      ) {
+        throw new Error("Invalid jurisdiction format");
+      }
+
+      updates.jurisdiction.coordinates.forEach(([lat, lng]) => {
+        if (typeof lat !== "number" || typeof lng !== "number") {
+          throw new Error("Invalid jurisdiction coordinates");
+        }
+      });
+
+      $set.jurisdiction = {
+        type: "Polygon",
+        coordinates: updates.jurisdiction.coordinates, // flat [lat, lng]
+      };
     }
 
-    const res = await col.updateOne({ AgencyId }, { $set: updates });
+    // Explicit removal
+    if (updates.jurisdiction === null) {
+      $unset.jurisdiction = "";
+    }
+
+    // -------------------------
+    // Execute update
+    // -------------------------
+    const res = await col.updateOne(
+      { AgencyId },
+      {
+        ...(Object.keys($set).length ? { $set } : {}),
+        ...(Object.keys($unset).length ? { $unset } : {}),
+      },
+    );
+
     return res.modifiedCount > 0;
   },
-
   async deleteAgency(AgencyId) {
     if (!AgencyId) throw new Error("AgencyId required");
     const col = await getAgencyCollection();
@@ -847,22 +986,9 @@ const AgencyModel = {
 
     return await col.find(query).project({ password: 0 }).toArray();
   },
-
-  async searchAgenciesByPoint(lat, lng, radiusMeters = 1000, mode = "location") {
-    const col = await getAgencyCollection();
-    const point = { type: "Point", coordinates: [Number(lng), Number(lat)] };
-
-    if (mode === "location") {
-      return await col.find({ locationGeo: { $nearSphere: { $geometry: point, $maxDistance: Number(radiusMeters) } } }).project({ password: 0 }).toArray();
-    }
-
-    // jurisdiction - find polygons containing the point
-    return await col.find({ jurisdiction: { $geoIntersects: { $geometry: point } } }).project({ password: 0 }).toArray();
-  }
 };
 
 module.exports = AgencyModel;
-
 
 // async updateOTP(mobileNumber, otp) {
 //   const agencyCollection = await getAgencyCollection();

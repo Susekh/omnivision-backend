@@ -30,7 +30,6 @@ router.get("/:agencyId/groundstaff", AgencyController.getGroundStaffByAgency);
 
 // new agency management routes
 router.get('/agencies', AgencyController.listAgencies);
-router.get('/agencies/search', AgencyController.searchAgencies); // query: lat, lng, radius, mode
 router.get('/agencies/:agencyId', AgencyController.getAgencyById);
 router.put('/agencies/:agencyId', AgencyController.updateAgency);
 router.delete('/agencies/:agencyId', AgencyController.deleteAgency);
