@@ -33,7 +33,6 @@ router.get('/agencies', AgencyController.listAgencies);
 router.get('/agencies/:agencyId', AgencyController.getAgencyById);
 router.put('/agencies/:agencyId', AgencyController.updateAgency);
 router.delete('/agencies/:agencyId', AgencyController.deleteAgency);
-
 router.get('/incident-images/:event_id', AgencyController.allImage);
 
 

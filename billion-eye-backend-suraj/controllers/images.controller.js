@@ -3,7 +3,8 @@ const { uploadImageToS3, getFileUrl } = require("../services/minio.service");
 // const piexif = require("piexifjs");
 const Camera = require("../models/camera.model");
 const amqp = require("amqplib");
-const { OUTPUT_QUEUE, IP } = require("../config");
+const { getOutputQueue } = require("../services/queueConfig.service");
+const { IP } = require("../config");
  
 // function getLocalIPAddress() {
 //   const interfaces = os.networkInterfaces();
@@ -33,11 +34,14 @@ const rabbitmqHosts = [
 ];
 
 const connectToRabbitMQ = async () => {
+  const OUTPUT_QUEUE = await getOutputQueue();
+      console.log(`Using output queue: ${OUTPUT_QUEUE}`);
   for (const host of rabbitmqHosts) {
     const url = `amqp://${host}:5672`;
     try {
       console.log(`🔌 Trying to connect to RabbitMQ at ${url}`);
       const connection = await amqp.connect(url);
+      
       console.log(`✅ Connected to RabbitMQ at ${host}`);
       return connection;
     } catch (err) {
@@ -51,6 +55,7 @@ const PushToQueue = async (data) => {
   // console.log(data);
 
   try {
+      const OUTPUT_QUEUE = await getOutputQueue();
       //  const connection = await amqp.connect(`amqp://rabbitmq`);
         // const connection = await amqp.connect(`amqp://localhost`);
         //  const connection = await amqp.connect(`amqp://${rabbitmqHost}:5672`);

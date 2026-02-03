@@ -10,6 +10,7 @@ const userRoutes = require('./routes/user.routes');
 const agencyRoutes = require('./routes/agency.router');
 // Middleware (order matters!)
 const bodyParser = require('body-parser');
+const { switchModel, getActiveModelController } = require('./controllers/model.controller');
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
@@ -46,6 +47,8 @@ app.listen(port, () => {
 app.use('/backend/user', userRoutes);
 // app.use('/agencies',agencyRoutes);
 app.use('/backend',agencyRoutes);
+app.post('/backend/switch-model', switchModel);
+app.get("/backend/active-model", getActiveModelController);
 
 // app.use('/images', imageRoutes);
 app.get('/backend',(req, res) => {
