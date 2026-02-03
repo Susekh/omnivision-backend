@@ -52,11 +52,13 @@ async function getGroundStaffCollection() {
 // Agency Model
 const AgencyModel = {
 
-  async createAgencyInDB(AgencyName, mobileNumber, password, location = {}) {
+  async createAgencyInDB(AgencyName, mobileNumber, password, location = {}, eventResponsibleFor = [], jurisdiction = null) {
     console.log("[createAgencyInDB] Function called with parameters:", {
       AgencyName,
       mobileNumber,
       location,
+      eventResponsibleFor,
+      jurisdiction,
     });
   
     // Validate mobile number
@@ -85,7 +87,56 @@ const AgencyModel = {
         throw new Error("Invalid location. Latitude and Longitude must be numbers.");
       }
     }
-  
+
+    // Validate eventResponsibleFor
+    if (!Array.isArray(eventResponsibleFor)) {
+      throw new Error("eventResponsibleFor must be an array of strings");
+    }
+
+    // Prepare GeoJSON for location (if provided)
+    let locationGeo = null;
+    if (location && location.latitude !== undefined && location.longitude !== undefined) {
+      locationGeo = {
+        type: "Point",
+        coordinates: [Number(location.longitude), Number(location.latitude)], // GeoJSON expects [lng, lat]
+      };
+    }
+
+    // Validate and normalize jurisdiction GeoJSON (if provided)
+    let jurisdictionGeo = null;
+    if (jurisdiction) {
+      if (!jurisdiction.type || !jurisdiction.coordinates) {
+        throw new Error("Invalid jurisdiction GeoJSON");
+      }
+
+      // Normalize coordinates to [lng, lat] pairs if they're provided as [lat, lng]
+      try {
+        const coords = jurisdiction.coordinates;
+        // Expecting a Polygon - coordinates[0] is ring
+        jurisdictionGeo = {
+          type: jurisdiction.type,
+          coordinates: coords.map((ring) =>
+            ring.map((pair) => {
+              if (pair.length !== 2) throw new Error("Invalid coordinate pair in jurisdiction");
+              const [a, b] = pair;
+              // Heuristic: if lat looks like  -90..90 and lon looks like -180..180
+              if (Math.abs(a) <= 90 && Math.abs(b) <= 180) {
+                // assume [lat, lng] -> convert
+                return [Number(b), Number(a)];
+              }
+              return [Number(a), Number(b)];
+            })
+          ),
+        };
+      } catch (err) {
+        console.error("[createAgencyInDB] Jurisdiction normalization failed:", err.message);
+        throw new Error("Invalid jurisdiction coordinates");
+      }
+    }
+
+    // Determine agency type
+    const type = jurisdictionGeo ? "jurisdiction" : "location";
+
     // Prepare agency object
     const agency = {
       AgencyId,
@@ -96,6 +147,10 @@ const AgencyModel = {
         latitude: location.latitude || null,
         longitude: location.longitude || null,
       },
+      locationGeo,
+      eventResponsibleFor: eventResponsibleFor || [],
+      jurisdiction: jurisdictionGeo,
+      type,
       createdAt: new Date(),
     };
     console.log("[createAgencyInDB] Agency object prepared:", agency);
@@ -104,6 +159,11 @@ const AgencyModel = {
       // Insert agency into the database
       console.log("[createAgencyInDB] Connecting to agency collection...");
       const agencyCollection = await getAgencyCollection();
+
+      // Ensure indexes for geo queries
+      await agencyCollection.createIndex({ locationGeo: "2dsphere" });
+      await agencyCollection.createIndex({ jurisdiction: "2dsphere" });
+
       console.log("[createAgencyInDB] Inserting agency into the database...");
       const insertResult = await agencyCollection.insertOne(agency);
   
@@ -718,6 +778,87 @@ const AgencyModel = {
     }
 }
 ,
+
+// Additional helpers for agencies
+
+  async findAgencyByAgencyId(AgencyId) {
+    if (!AgencyId) throw new Error("AgencyId required");
+    const col = await getAgencyCollection();
+    return await col.findOne({ AgencyId });
+  },
+
+  async findOne(query) {
+    const col = await getAgencyCollection();
+    return await col.findOne(query);
+  },
+
+  async updatePassword(AgencyId, hashedPassword) {
+    const col = await getAgencyCollection();
+    const res = await col.updateOne({ AgencyId }, { $set: { password: hashedPassword } });
+    return res.modifiedCount > 0;
+  },
+
+  async updateAgency(AgencyId, updates = {}) {
+    if (!AgencyId) throw new Error("AgencyId required");
+    const col = await getAgencyCollection();
+
+    // Normalize jurisdiction if present
+    if (updates.jurisdiction) {
+      const j = updates.jurisdiction;
+      updates.jurisdiction = {
+        type: j.type,
+        coordinates: j.coordinates.map((ring) => ring.map((pair) => {
+          const [a, b] = pair;
+          if (Math.abs(a) <= 90 && Math.abs(b) <= 180) return [Number(b), Number(a)];
+          return [Number(a), Number(b)];
+        }))
+      };
+      updates.type = "jurisdiction";
+    }
+
+    // Update location and GeoJSON
+    if (updates.location && updates.location.latitude !== undefined && updates.location.longitude !== undefined) {
+      updates.locationGeo = { type: "Point", coordinates: [Number(updates.location.longitude), Number(updates.location.latitude)] };
+      updates.type = updates.type || "location";
+    }
+
+    const res = await col.updateOne({ AgencyId }, { $set: updates });
+    return res.modifiedCount > 0;
+  },
+
+  async deleteAgency(AgencyId) {
+    if (!AgencyId) throw new Error("AgencyId required");
+    const col = await getAgencyCollection();
+    const res = await col.deleteOne({ AgencyId });
+    return res.deletedCount > 0;
+  },
+
+  async listAgencies(filter = {}) {
+    const col = await getAgencyCollection();
+    const query = {};
+
+    if (filter.eventResponsibleFor) {
+      query.eventResponsibleFor = { $in: [filter.eventResponsibleFor] };
+    }
+
+    if (filter.type) {
+      query.type = filter.type;
+    }
+
+    return await col.find(query).project({ password: 0 }).toArray();
+  },
+
+  async searchAgenciesByPoint(lat, lng, radiusMeters = 1000, mode = "location") {
+    const col = await getAgencyCollection();
+    const point = { type: "Point", coordinates: [Number(lng), Number(lat)] };
+
+    if (mode === "location") {
+      return await col.find({ locationGeo: { $nearSphere: { $geometry: point, $maxDistance: Number(radiusMeters) } } }).project({ password: 0 }).toArray();
+    }
+
+    // jurisdiction - find polygons containing the point
+    return await col.find({ jurisdiction: { $geoIntersects: { $geometry: point } } }).project({ password: 0 }).toArray();
+  }
 };
 
 module.exports = AgencyModel;

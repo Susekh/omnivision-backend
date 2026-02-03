@@ -5,6 +5,7 @@ const { getImageFromMinio } = require('../controllers/minio.controller');
 const AgencyController = require("../controllers/agency.controller");
 
 router.post("/agency",AgencyController.createAgency);
+router.post("/agencies",AgencyController.createAgency);
 
 router.get("/agency-dashboard/:agencyId", AgencyController.getAgencyDashboard);
 
@@ -27,6 +28,12 @@ router.post("/agency/logout", AgencyController.logoutAgency);
 router.get('/:bucket/:year/:filename', getImageFromMinio);
 router.get("/:agencyId/groundstaff", AgencyController.getGroundStaffByAgency);
 
+// new agency management routes
+router.get('/agencies', AgencyController.listAgencies);
+router.get('/agencies/search', AgencyController.searchAgencies); // query: lat, lng, radius, mode
+router.get('/agencies/:agencyId', AgencyController.getAgencyById);
+router.put('/agencies/:agencyId', AgencyController.updateAgency);
+router.delete('/agencies/:agencyId', AgencyController.deleteAgency);
 
 router.get('/incident-images/:event_id', AgencyController.allImage);
 

@@ -5,7 +5,7 @@ networks:
 
 services:
   app:
-    image: dm2003/billion-i-model-v1:latest  
+    image: dibyatman/docker_yolo_validatation-app:V1.1 
     env_file: 
       - .env
     depends_on:
@@ -73,7 +73,7 @@ services:
       - app_network
 
   deduplication_services:
-    image: ashpikachu2001/deduplication_services:V1.2
+    image: ashpikachu2001/deduplication_services:V1.4
     container_name: deduplication_services
     depends_on:
       rabbitmq:
