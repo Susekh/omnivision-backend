@@ -20,6 +20,23 @@ services:
     networks:
       - app_network
 
+    # ---------------- VLM OBJECT DETECTION ----------------
+  vlm_object_detection:
+    image: samssahu/vlmobject-detection:latest
+    container_name: vlm_object_detection
+    restart: always
+    environment:
+      - QUEUE_NAME=vlm_queue
+      - RABBITMQ_HOST=rabbitmq
+      - MONGO_HOST=mongodb
+      - MINIO_HOST=minio
+    depends_on:
+      - rabbitmq
+      - mongodb
+      - minio
+    networks:
+      - app_network
+      
   mongodb:
     image: mongo:latest
     container_name: mongodb
