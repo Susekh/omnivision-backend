@@ -18,6 +18,11 @@ router.get("/events/:event_id", AgencyController.getEventsById);
 
 router.post("/agency/addgroundstaff", AgencyController.addNewGroundStaff);
 
+// Groundstaff login route
+router.post("/groundstaff/login", AgencyController.loginGroundStaff);
+
+// Get tasks for groundstaff
+router.get("/groundstaff/tasks/:agencyId", AgencyController.getGroundStaffTasks);
 
 router.post("/agency/login", AgencyController.loginAgency);
 router.post("/agencies/logout", AgencyController.logoutAgency);

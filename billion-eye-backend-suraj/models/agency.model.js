@@ -273,12 +273,12 @@ const AgencyModel = {
     }
   },
 
-  async addGroundStaff(name, number, address, agencyId) {
+  async addGroundStaff(name, number, address, agencyId, password) {
     console.log("[addGroundStaff] Function called with parameters:", {
       name,
       number,
       address,
-      agencyId, // Include agencyId in the log
+      agencyId,
     });
 
     // Validate input
@@ -302,11 +302,20 @@ const AgencyModel = {
       throw new Error("Invalid agencyId. AgencyId must be a non-empty string.");
     }
 
+    if (!password || typeof password !== "string" || password.length < 6) {
+      console.error("[addGroundStaff] Invalid password");
+      throw new Error("Invalid password. Password must be at least 6 characters.");
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     const groundStaff = {
       name,
       number,
       address,
-      agencyId, // Include agencyId in the groundStaff object
+      agencyId,
+      password: hashedPassword,
       createdAt: new Date(),
     };
 
@@ -365,6 +374,113 @@ const AgencyModel = {
     } catch (error) {
       console.error("[getGroundStaffByAgencyId] Error:", error.message);
       throw new Error("Failed to fetch ground staff by agency ID.");
+    }
+  },
+
+  async groundStaffLogin(mobileNumber, password) {
+    console.log("[groundStaffLogin] Login attempt:", { mobileNumber });
+
+    // Basic validation
+    if (!/^\d{10}$/.test(mobileNumber)) {
+      throw new Error("Invalid mobile number or password.");
+    }
+
+    if (!password || typeof password !== "string") {
+      throw new Error("Invalid mobile number or password.");
+    }
+
+    try {
+      const groundStaffCollection = await getGroundStaffCollection();
+
+      const groundStaff = await groundStaffCollection.findOne({ number: mobileNumber });
+
+      // Do NOT reveal whether user exists
+      if (!groundStaff || !groundStaff.password) {
+        throw new Error("Invalid mobile number or password.");
+      }
+
+      // Password verification using bcrypt
+      let isPasswordValid = false;
+
+      // Normal case: bcrypt hash
+      if (groundStaff.password.startsWith("$2")) {
+        isPasswordValid = await bcrypt.compare(password, groundStaff.password);
+      } else {
+        // SAFETY NET (for old data without hashing)
+        isPasswordValid = groundStaff.password === password;
+
+        // OPTIONAL: auto-fix bad stored password
+        if (isPasswordValid && !groundStaff.password.startsWith("$2")) {
+          const hashed = await bcrypt.hash(password, 10);
+          await groundStaffCollection.updateOne(
+            { _id: groundStaff._id },
+            { $set: { password: hashed } },
+          );
+        }
+      }
+
+      if (!isPasswordValid) {
+        throw new Error("Invalid mobile number or password.");
+      }
+
+      // Success response
+      return {
+        success: true,
+        message: "Login successful",
+        groundStaff: {
+          _id: groundStaff._id,
+          name: groundStaff.name,
+          number: groundStaff.number,
+          agencyId: groundStaff.agencyId,
+          address: groundStaff.address,
+        },
+      };
+    } catch (err) {
+      console.error("[groundStaffLogin] Error:", err.message);
+
+      // Always return generic auth error
+      throw new Error("Invalid mobile number or password.");
+    }
+  },
+
+  async getTasksForAgency(agencyId) {
+    console.log("[getTasksForAgency] Fetching tasks for agencyId:", agencyId);
+
+    try {
+      if (!agencyId || typeof agencyId !== "string" || agencyId.trim() === "") {
+        throw new Error("Invalid agencyId. AgencyId must be a non-empty string.");
+      }
+
+      const db = client.db("BillionEyes_V1");
+      const eventsCollection = db.collection("events");
+
+      // Query for events assigned to this agency with status "Assigned"
+      const tasks = await eventsCollection
+        .find({
+          $or: [
+            { "assigned_agency.agencies": agencyId },
+            { "assigned_agencies.agencies": agencyId },
+          ],
+        })
+        .project({
+          _id: 1,
+          event_id: 1,
+          description: 1,
+          timestamp: 1,
+          status: 1,
+          location: 1,
+          incident_type: 1,
+          ground_staff: 1,
+          assigned_agency: 1,
+        })
+        .toArray();
+
+      console.log("[getTasksForAgency] Found tasks:", tasks.length);
+
+      return tasks;
+    } catch (error) {
+      console.error("[getTasksForAgency] Error:", error.message);
+      throw new Error("Failed to fetch tasks for agency.");
     }
   },
 

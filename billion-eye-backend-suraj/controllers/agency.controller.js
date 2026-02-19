@@ -163,7 +163,7 @@ async function addNewGroundStaff(req, res) {
     console.log("[addNewGroundStaff] Function called");
     console.log("[addNewGroundStaff] Request body received:", req.body);
 
-    const { name, number, address, agencyId } = req.body;
+    const { name, number, address, agencyId, password } = req.body;
 
     // Validate required fields
     if (!name || typeof name !== "string" || name.trim() === "") {
@@ -198,8 +198,16 @@ async function addNewGroundStaff(req, res) {
       });
     }
 
+    if (!password || typeof password !== "string" || password.trim().length < 6) {
+      console.warn("[addNewGroundStaff] Invalid password:", password);
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 6 characters long.",
+      });
+    }
+
     // Call the model function to add ground staff
-    const result = await AgencyModel.addGroundStaff(name, number, address, agencyId);
+    const result = await AgencyModel.addGroundStaff(name, number, address, agencyId, password);
 
     console.log("[addNewGroundStaff] Ground staff added successfully:", result);
 
@@ -451,6 +459,92 @@ async function getEventReport(req, res) {
   }
 }
 
+async function loginGroundStaff(req, res) {
+  try {
+    console.log("[loginGroundStaff] Function called");
+    console.log("[loginGroundStaff] Request body received:", req.body);
+
+    const { mobileNumber, password } = req.body;
+
+    // Validate required fields
+    if (!mobileNumber || !password) {
+      console.warn("[loginGroundStaff] Missing required fields");
+      return res.status(400).json({
+        success: false,
+        message: "Mobile number and password are required.",
+      });
+    }
+
+    // Call the model function to handle groundstaff login
+    const result = await AgencyModel.groundStaffLogin(mobileNumber, password);
+
+    console.log("[loginGroundStaff] Login successful for groundStaff:", result.groundStaff.number);
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { groundStaffId: result.groundStaff._id, mobileNumber: result.groundStaff.number, agencyId: result.groundStaff.agencyId },
+      JWT_SECRET,
+      { expiresIn: JWT_EXPIRATION }
+    );
+
+    console.log("[loginGroundStaff] Token generated successfully.");
+
+    // Send success response with token
+    return res.status(200).json({
+      success: true,
+      message: "Login successful.",
+      token,
+      groundStaff: {
+        id: result.groundStaff._id,
+        name: result.groundStaff.name,
+        number: result.groundStaff.number,
+        agencyId: result.groundStaff.agencyId,
+      },
+    });
+  } catch (error) {
+    console.error("[loginGroundStaff] Error:", error.message);
+    return res.status(401).json({
+      success: false,
+      message: error.message || "Login failed.",
+    });
+  }
+}
+
+async function getGroundStaffTasks(req, res) {
+  try {
+    console.log("[getGroundStaffTasks] Function called");
+    const { agencyId } = req.params;
+    const groundStaffId = req.headers["x-groundstaff-id"]; // or from token
+
+    if (!agencyId) {
+      console.warn("[getGroundStaffTasks] Missing agencyId");
+      return res.status(400).json({
+        success: false,
+        message: "Agency ID is required.",
+      });
+    }
+
+    console.log("[getGroundStaffTasks] Fetching tasks for agencyId:", agencyId);
+
+    // Call the model function to fetch tasks assigned to groundstaff
+    const tasks = await AgencyModel.getTasksForAgency(agencyId);
+
+    console.log("[getGroundStaffTasks] Tasks fetched successfully:", tasks.length);
+
+    // Send success response
+    return res.status(200).json({
+      success: true,
+      data: tasks,
+    });
+  } catch (error) {
+    console.error("[getGroundStaffTasks] Error:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to fetch tasks.",
+    });
+  }
+}
+
 async function getGroundStaffByAgency(req, res) {
   try {
     const { agencyId } = req.params;
@@ -579,9 +673,11 @@ module.exports = {
   updateEvenstStatus,
   getEventsById,
   loginAgency,
+  loginGroundStaff,
   allImage,
   getEventReport,
   getGroundStaffByAgency,
+  getGroundStaffTasks,
   logoutAgency, 
   // addGroundStaff,
   // deleteIncident,
