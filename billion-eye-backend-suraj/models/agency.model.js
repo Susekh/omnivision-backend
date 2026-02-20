@@ -382,35 +382,49 @@ const AgencyModel = {
 
     // Basic validation
     if (!/^\d{10}$/.test(mobileNumber)) {
+      console.error("[groundStaffLogin] Invalid mobile format:", mobileNumber);
       throw new Error("Invalid mobile number or password.");
     }
 
     if (!password || typeof password !== "string") {
+      console.error("[groundStaffLogin] Invalid password format");
       throw new Error("Invalid mobile number or password.");
     }
 
     try {
       const groundStaffCollection = await getGroundStaffCollection();
 
+      console.log("[groundStaffLogin] Searching for groundstaff with number:", mobileNumber);
       const groundStaff = await groundStaffCollection.findOne({ number: mobileNumber });
 
-      // Do NOT reveal whether user exists
-      if (!groundStaff || !groundStaff.password) {
+      if (!groundStaff) {
+        console.error("[groundStaffLogin] No groundstaff found with number:", mobileNumber);
+        console.log("[groundStaffLogin] Available groundstaff in DB:", await groundStaffCollection.countDocuments());
         throw new Error("Invalid mobile number or password.");
       }
+
+      if (!groundStaff.password) {
+        console.error("[groundStaffLogin] Groundstaff found but no password field:", groundStaff._id);
+        throw new Error("Invalid mobile number or password.");
+      }
+
+      console.log("[groundStaffLogin] Groundstaff found, verifying password");
 
       // Password verification using bcrypt
       let isPasswordValid = false;
 
       // Normal case: bcrypt hash
       if (groundStaff.password.startsWith("$2")) {
+        console.log("[groundStaffLogin] Password is bcrypt hashed");
         isPasswordValid = await bcrypt.compare(password, groundStaff.password);
       } else {
         // SAFETY NET (for old data without hashing)
+        console.log("[groundStaffLogin] Password is plain text (not hashed)");
         isPasswordValid = groundStaff.password === password;
 
         // OPTIONAL: auto-fix bad stored password
         if (isPasswordValid && !groundStaff.password.startsWith("$2")) {
+          console.log("[groundStaffLogin] Auto-hashing password for security");
           const hashed = await bcrypt.hash(password, 10);
           await groundStaffCollection.updateOne(
             { _id: groundStaff._id },
@@ -420,8 +434,11 @@ const AgencyModel = {
       }
 
       if (!isPasswordValid) {
+        console.error("[groundStaffLogin] Password mismatch for user:", mobileNumber);
         throw new Error("Invalid mobile number or password.");
       }
+
+      console.log("[groundStaffLogin] Login successful for:", mobileNumber);
 
       // Success response
       return {
@@ -437,8 +454,6 @@ const AgencyModel = {
       };
     } catch (err) {
       console.error("[groundStaffLogin] Error:", err.message);
-
-      // Always return generic auth error
       throw new Error("Invalid mobile number or password.");
     }
   },
