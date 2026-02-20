@@ -255,7 +255,7 @@ const getAgencyDashboard = async (req, res) => {
 const updateEvenstStatus = async (req, res) => {
   try {
     const { event_id } = req.params;
-    const { status, groundStaffName, agencyId } = req.body;
+    const { status, groundStaffName, groundStaffId, agencyId } = req.body;
 
     if (!status) {
       return res.status(400).json({ message: "Status is required." });
@@ -268,6 +268,9 @@ const updateEvenstStatus = async (req, res) => {
     }
     if (status === "Assigned" && groundStaffName) {
       updateFields.ground_staff = groundStaffName;
+      if (groundStaffId) {
+        updateFields.ground_staff_id = groundStaffId; // Store the groundStaffId for filtering
+      }
       updateFields.assignment_time = new Date(); // <-- Add this line
     }
 
@@ -514,7 +517,7 @@ async function getGroundStaffTasks(req, res) {
   try {
     console.log("[getGroundStaffTasks] Function called");
     const { agencyId } = req.params;
-    const groundStaffId = req.headers["x-groundstaff-id"]; // or from token
+    const groundStaffId = req.headers["x-groundstaff-id"]; // Get from header
 
     if (!agencyId) {
       console.warn("[getGroundStaffTasks] Missing agencyId");
@@ -524,10 +527,18 @@ async function getGroundStaffTasks(req, res) {
       });
     }
 
-    console.log("[getGroundStaffTasks] Fetching tasks for agencyId:", agencyId);
+    if (!groundStaffId) {
+      console.warn("[getGroundStaffTasks] Missing groundStaffId");
+      return res.status(400).json({
+        success: false,
+        message: "Ground Staff ID is required.",
+      });
+    }
 
-    // Call the model function to fetch tasks assigned to groundstaff
-    const tasks = await AgencyModel.getTasksForAgency(agencyId);
+    console.log("[getGroundStaffTasks] Fetching tasks for agencyId:", agencyId, "groundStaffId:", groundStaffId);
+
+    // Call the model function to fetch tasks assigned to this specific groundstaff
+    const tasks = await AgencyModel.getTasksForAgency(agencyId, groundStaffId);
 
     console.log("[getGroundStaffTasks] Tasks fetched successfully:", tasks.length);
 

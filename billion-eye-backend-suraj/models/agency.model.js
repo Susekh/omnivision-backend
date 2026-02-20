@@ -458,8 +458,8 @@ const AgencyModel = {
     }
   },
 
-  async getTasksForAgency(agencyId) {
-    console.log("[getTasksForAgency] Fetching tasks for agencyId:", agencyId);
+  async getTasksForAgency(agencyId, groundStaffId = null) {
+    console.log("[getTasksForAgency] Fetching tasks for agencyId:", agencyId, "groundStaffId:", groundStaffId);
 
     try {
       if (!agencyId || typeof agencyId !== "string" || agencyId.trim() === "") {
@@ -469,14 +469,22 @@ const AgencyModel = {
       const db = client.db("BillionEyes_V1");
       const eventsCollection = db.collection("events");
 
+      // Build the query based on whether groundStaffId is provided
+      let query = {
+        $or: [
+          { "assigned_agency.agencies": agencyId },
+          { "assigned_agencies.agencies": agencyId },
+        ],
+      };
+
+      // If groundStaffId is provided, filter by that specific groundstaff
+      if (groundStaffId) {
+        query.ground_staff_id = groundStaffId;
+      }
+
       // Query for events assigned to this agency with status "Assigned"
       const tasks = await eventsCollection
-        .find({
-          $or: [
-            { "assigned_agency.agencies": agencyId },
-            { "assigned_agencies.agencies": agencyId },
-          ],
-        })
+        .find(query)
         .project({
           _id: 1,
           event_id: 1,
@@ -486,6 +494,7 @@ const AgencyModel = {
           location: 1,
           incident_type: 1,
           ground_staff: 1,
+          ground_staff_id: 1,
           assigned_agency: 1,
         })
         .toArray();
