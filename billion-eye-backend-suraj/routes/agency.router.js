@@ -21,6 +21,8 @@ router.post("/agency/addgroundstaff", AgencyController.addNewGroundStaff);
 // Groundstaff login route
 router.post("/groundstaff/login", AgencyController.loginGroundStaff);
 
+router.patch("/groundstaff/task/:taskId/complete", AgencyController.completeGroundStaffTask);
+
 // Get tasks for groundstaff
 router.get("/groundstaff/tasks/:agencyId", AgencyController.getGroundStaffTasks);
 

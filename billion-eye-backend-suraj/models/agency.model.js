@@ -1126,6 +1126,67 @@ const AgencyModel = {
 
     return await col.find(query).project({ password: 0 }).toArray();
   },
+
+  async completeGroundStaffTask(taskId, remark, base64Photo) {
+  try {
+    const db = client.db("BillionEyes_V1");
+    const eventsCollection = db.collection("events");
+
+    // ── Save base64 image to S3 ──────────────────────────────────────────
+    let photoUrl = null;
+
+    if (base64Photo) {
+      // Strip the data URI prefix  e.g. "data:image/jpeg;base64,/9j/..."
+      const matches = base64Photo.match(/^data:(.+);base64,(.+)$/);
+      if (!matches) throw new Error("Invalid base64 image format.");
+
+      const mimeType = matches[1];           // "image/jpeg"
+      const imageBuffer = Buffer.from(matches[2], "base64");
+
+      // Compress with sharp before storing (max 800px, 70% quality)
+      const compressedBuffer = await sharp(imageBuffer)
+        .resize({ width: 800, withoutEnlargement: true })
+        .jpeg({ quality: 70 })
+        .toBuffer();
+
+      const year = new Date().getFullYear();
+      const filename = `completion_${taskId}_${Date.now()}.jpg`;
+      const s3Key = `${year}/completions/${filename}`;
+
+      await s3.putObject({
+        Bucket: "billion-eyes-images",
+        Key: s3Key,
+        Body: compressedBuffer,
+        ContentType: "image/jpeg",
+      }).promise();
+
+      photoUrl = `${process.env.AWS_S3_ENDPOINT}/billion-eyes-images/${s3Key}`;
+    }
+
+    // ── Update event in DB ───────────────────────────────────────────────
+    const eventsCol = await this.getEventsCollection();
+    const result = await eventsCol.updateOne(
+      { event_id: taskId },
+      {
+        $set: {
+          status: "Completed",
+          completion_remark: remark,
+          completion_photo_url: photoUrl,
+          completed_at: new Date(),
+        },
+      }
+    );
+
+    if (result.matchedCount === 0) {
+      throw new Error("Task not found.");
+    }
+
+    return { success: true, photoUrl };
+  } catch (error) {
+    console.error("[completeGroundStaffTask] Error:", error.message);
+    throw new Error(error.message || "Failed to complete task.");
+  }
+},
 };
 
 module.exports = AgencyModel;
@@ -1140,3 +1201,5 @@ module.exports = AgencyModel;
 //   console.log("[updateOTP] Updated agency OTP:", result.modifiedCount);
 //   return result.modifiedCount > 0;
 // }
+
+

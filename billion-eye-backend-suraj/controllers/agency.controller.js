@@ -606,6 +606,47 @@ async function getGroundStaffByAgency(req, res) {
   }
 }
 
+async function completeGroundStaffTask(req, res) {
+  try {
+    console.log("[completeGroundStaffTask] Called for taskId:", req.params.taskId);
+
+    const { taskId } = req.params;
+    const { status, remark, photo } = req.body;
+
+    // ── Validation ───────────────────────────────────────────────────────
+    if (!taskId) {
+      return res.status(400).json({ success: false, message: "Task ID is required." });
+    }
+
+    if (status !== "Completed") {
+      return res.status(400).json({ success: false, message: "Status must be 'Completed'." });
+    }
+
+    if (!remark || typeof remark !== "string" || remark.trim() === "") {
+      return res.status(400).json({ success: false, message: "Remark is required." });
+    }
+
+    if (!photo || typeof photo !== "string" || !photo.startsWith("data:image")) {
+      return res.status(400).json({ success: false, message: "A valid base64 photo is required." });
+    }
+
+    // ── Call model ───────────────────────────────────────────────────────
+    const result = await AgencyModel.completeGroundStaffTask(taskId, remark.trim(), photo);
+
+    return res.status(200).json({
+      success: true,
+      message: "Task marked as completed.",
+      photoUrl: result.photoUrl,
+    });
+  } catch (error) {
+    console.error("[completeGroundStaffTask] Error:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to complete task.",
+    });
+  }
+}
+
 // New agency endpoints
 async function listAgencies(req, res) {
   try {
@@ -695,6 +736,7 @@ module.exports = {
   resetPasswordAgency,
   requestOtpAgency,
   addNewGroundStaff,
+  completeGroundStaffTask,
   // new
   listAgencies,
   getAgencyById,

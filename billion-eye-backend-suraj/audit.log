@@ -371,3 +371,18 @@
 {"level":"info","message":{"body":{},"method":"GET","timestamp":"2026-02-19T20:23:38.569Z","url":"/"},"timestamp":"2026-02-19T20:23:38.569Z"}
 {"level":"info","message":{"body":{},"method":"GET","timestamp":"2026-02-19T20:23:49.055Z","url":"/Agency"},"timestamp":"2026-02-19T20:23:49.055Z"}
 {"level":"info","message":{"body":{},"method":"GET","timestamp":"2026-02-19T20:24:08.825Z","url":"/agencyLogin"},"timestamp":"2026-02-19T20:24:08.825Z"}
+{"level":"info","message":{"body":{},"method":"GET","timestamp":"2026-02-25T10:07:13.090Z","url":"/backend/agencies"},"timestamp":"2026-02-25T10:07:13.090Z"}
+{"level":"info","message":{"body":{},"method":"GET","timestamp":"2026-02-25T10:07:13.096Z","url":"/backend/active-model"},"timestamp":"2026-02-25T10:07:13.096Z"}
+{"level":"info","message":{"body":{},"method":"GET","timestamp":"2026-02-25T10:07:13.124Z","url":"/backend/agencies"},"timestamp":"2026-02-25T10:07:13.124Z"}
+{"level":"info","message":{"body":{},"method":"GET","timestamp":"2026-02-25T10:07:13.129Z","url":"/backend/active-model"},"timestamp":"2026-02-25T10:07:13.129Z"}
+{"level":"info","message":{"body":{"mobileNumber":"8480750392","password":"omnivision123"},"method":"POST","timestamp":"2026-02-25T10:07:32.774Z","url":"/backend/agency/login"},"timestamp":"2026-02-25T10:07:32.774Z"}
+{"level":"info","message":{"body":{"mobileNumber":"8480750392","password":"omnivision123"},"method":"POST","timestamp":"2026-02-25T10:07:38.223Z","url":"/backend/agency/login"},"timestamp":"2026-02-25T10:07:38.223Z"}
+{"level":"info","message":{"body":{},"method":"GET","timestamp":"2026-02-25T10:07:48.306Z","url":"/backend/agencies"},"timestamp":"2026-02-25T10:07:48.306Z"}
+{"level":"info","message":{"body":{},"method":"GET","timestamp":"2026-02-25T10:07:48.308Z","url":"/backend/active-model"},"timestamp":"2026-02-25T10:07:48.308Z"}
+{"level":"info","message":{"body":{},"method":"GET","timestamp":"2026-02-25T10:07:48.312Z","url":"/backend/agencies"},"timestamp":"2026-02-25T10:07:48.312Z"}
+{"level":"info","message":{"body":{},"method":"GET","timestamp":"2026-02-25T10:07:48.323Z","url":"/backend/active-model"},"timestamp":"2026-02-25T10:07:48.323Z"}
+{"level":"info","message":{"body":{"AgencyName":"Kiims ","eventResponsibleFor":["Human healthcare services"],"jurisdiction":null,"lat":20.27767900038015,"lng":85.83477958751283,"mobileNumber":"8480750392","password":"omnivision123"},"method":"PUT","timestamp":"2026-02-25T10:07:57.874Z","url":"/backend/agencies/agency-125"},"timestamp":"2026-02-25T10:07:57.874Z"}
+{"level":"info","message":{"body":{},"method":"GET","timestamp":"2026-02-25T10:07:57.958Z","url":"/backend/agencies"},"timestamp":"2026-02-25T10:07:57.958Z"}
+{"level":"info","message":{"body":{"mobileNumber":"8480750392","password":"omnivision123"},"method":"POST","timestamp":"2026-02-25T10:08:10.841Z","url":"/backend/agency/login"},"timestamp":"2026-02-25T10:08:10.841Z"}
+{"level":"info","message":{"body":{},"method":"GET","timestamp":"2026-02-25T10:08:11.958Z","url":"/backend/agency-dashboard/agency-125"},"timestamp":"2026-02-25T10:08:11.958Z"}
+{"level":"info","message":{"body":{},"method":"GET","timestamp":"2026-02-25T10:08:11.967Z","url":"/backend/agency-dashboard/agency-125"},"timestamp":"2026-02-25T10:08:11.967Z"}
