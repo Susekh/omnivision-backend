@@ -58,7 +58,6 @@
 
 
 const AWS = require('aws-sdk');
-require('dotenv').config();
 
 // Initialize AWS S3 client
 // const s3 = new AWS.S3({
