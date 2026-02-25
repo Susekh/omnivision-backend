@@ -1195,7 +1195,7 @@ const AgencyModel = {
   ) {
     try {
       const { ObjectId } = require("mongodb");
-      const { uploadImageToS3 } = require("./s3.service"); // adjust path to your s3 file
+      const { uploadImageToS3 } = require("../services/minio.service.js"); // adjust path to your s3 file
 
       // ── Convert base64 → buffer and upload via existing utility ─────────
       let photoUrl = null;
