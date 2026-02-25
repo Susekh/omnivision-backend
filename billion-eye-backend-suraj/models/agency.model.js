@@ -23,6 +23,24 @@ const s3 = new AWS.S3({
   },
 });
 
+const uploadImageToS3 = async (fileData, bucketName, objectName) => {
+  try {
+    const params = {
+      Bucket: bucketName,
+      Key: objectName,
+      Body: fileData.buffer,
+      ContentType: fileData.mimetype,
+    };
+
+    await s3.upload(params).promise();
+    console.log("✅ File uploaded to S3 successfully.");
+    return { status: true, message: "File uploaded successfully." };
+  } catch (err) {
+    console.error("❌ AWS S3 Upload Error:", err);
+    return { status: false, message: "Failed to upload file!" };
+  }
+};
+
 // Helper functions to get MongoDB collections
 async function getAgencyCollection() {
   if (!client.topology || !client.topology.isConnected()) {
@@ -1194,8 +1212,7 @@ const AgencyModel = {
     base64Photo,
   ) {
     try {
-      const { ObjectId } = require("mongodb");
-      const { uploadImageToS3 } = require("../services/minio.service.js"); // adjust path to your s3 file
+      const { ObjectId } = require("mongodb"); // adjust path to your s3 file
 
       // ── Convert base64 → buffer and upload via existing utility ─────────
       let photoUrl = null;
