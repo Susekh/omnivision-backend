@@ -1127,23 +1127,19 @@ const AgencyModel = {
     return await col.find(query).project({ password: 0 }).toArray();
   },
 
-  async completeGroundStaffTask(taskId, remark, base64Photo) {
+async completeGroundStaffTask(taskId, groundStaffId, agencyId, remark, base64Photo) {
   try {
-    const db = client.db("BillionEyes_V1");
-    const eventsCollection = db.collection("events");
+    const { ObjectId } = require("mongodb");
 
-    // ── Save base64 image to S3 ──────────────────────────────────────────
+    // ── Upload photo to S3 ───────────────────────────────────────────────
     let photoUrl = null;
 
     if (base64Photo) {
-      // Strip the data URI prefix  e.g. "data:image/jpeg;base64,/9j/..."
       const matches = base64Photo.match(/^data:(.+);base64,(.+)$/);
       if (!matches) throw new Error("Invalid base64 image format.");
 
-      const mimeType = matches[1];           // "image/jpeg"
       const imageBuffer = Buffer.from(matches[2], "base64");
 
-      // Compress with sharp before storing (max 800px, 70% quality)
       const compressedBuffer = await sharp(imageBuffer)
         .resize({ width: 800, withoutEnlargement: true })
         .jpeg({ quality: 70 })
@@ -1153,6 +1149,8 @@ const AgencyModel = {
       const filename = `completion_${taskId}_${Date.now()}.jpg`;
       const s3Key = `${year}/completions/${filename}`;
 
+      console.log("[completeGroundStaffTask] Uploading to S3:", s3Key);
+
       await s3.putObject({
         Bucket: "billion-eyes-images",
         Key: s3Key,
@@ -1161,25 +1159,44 @@ const AgencyModel = {
       }).promise();
 
       photoUrl = `${process.env.AWS_S3_ENDPOINT}/billion-eyes-images/${s3Key}`;
+      console.log("[completeGroundStaffTask] S3 upload successful:", photoUrl);
     }
 
-    // ── Update event in DB ───────────────────────────────────────────────
+    // ── Find event by _id (ObjectId) or event_id (string) ───────────────
     const eventsCol = await this.getEventsCollection();
+
+    const query = ObjectId.isValid(taskId)
+      ? { _id: new ObjectId(taskId) }
+      : { event_id: taskId };
+
+    console.log("[completeGroundStaffTask] Querying event with:", query);
+
+    // Verify event exists first
+    const event = await eventsCol.findOne(query);
+    if (!event) throw new Error("Task not found.");
+
+    console.log("[completeGroundStaffTask] Event found:", event.event_id);
+
+    // ── Update the event document ────────────────────────────────────────
     const result = await eventsCol.updateOne(
-      { event_id: taskId },
+      query,
       {
         $set: {
           status: "Completed",
-          completion_remark: remark,
-          completion_photo_url: photoUrl,
-          completed_at: new Date(),
+          completion: {
+            ground_staff_id: groundStaffId,
+            agency_id: agencyId,
+            remark: remark,
+            photo_url: photoUrl,
+            completed_at: new Date(),
+          },
         },
       }
     );
 
-    if (result.matchedCount === 0) {
-      throw new Error("Task not found.");
-    }
+    console.log("[completeGroundStaffTask] Update result:", result.modifiedCount);
+
+    if (result.modifiedCount === 0) throw new Error("Failed to update task.");
 
     return { success: true, photoUrl };
   } catch (error) {
