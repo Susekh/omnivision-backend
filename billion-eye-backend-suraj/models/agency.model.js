@@ -459,54 +459,74 @@ const AgencyModel = {
   },
 
   async getTasksForAgency(agencyId, groundStaffId = null) {
-    console.log("[getTasksForAgency] Fetching tasks for agencyId:", agencyId, "groundStaffId:", groundStaffId);
+  console.log("[getTasksForAgency] Fetching tasks for agencyId:", agencyId, "groundStaffId:", groundStaffId);
 
-    try {
-      if (!agencyId || typeof agencyId !== "string" || agencyId.trim() === "") {
-        throw new Error("Invalid agencyId. AgencyId must be a non-empty string.");
-      }
-
-      const db = client.db("BillionEyes_V1");
-      const eventsCollection = db.collection("events");
-
-      // Build the query based on whether groundStaffId is provided
-      let query = {
-        $or: [
-          { "assigned_agency.agencies": agencyId },
-          { "assigned_agencies.agencies": agencyId },
-        ],
-      };
-
-      // If groundStaffId is provided, filter by that specific groundstaff
-      if (groundStaffId) {
-        query.ground_staff_id = groundStaffId;
-      }
-
-      // Query for events assigned to this agency with status "Assigned"
-      const tasks = await eventsCollection
-        .find(query)
-        .project({
-          _id: 1,
-          event_id: 1,
-          description: 1,
-          timestamp: 1,
-          status: 1,
-          location: 1,
-          incident_type: 1,
-          ground_staff: 1,
-          ground_staff_id: 1,
-          assigned_agency: 1,
-        })
-        .toArray();
-
-      console.log("[getTasksForAgency] Found tasks:", tasks.length);
-
-      return tasks;
-    } catch (error) {
-      console.error("[getTasksForAgency] Error:", error.message);
-      throw new Error("Failed to fetch tasks for agency.");
+  try {
+    if (!agencyId || typeof agencyId !== "string" || agencyId.trim() === "") {
+      throw new Error("Invalid agencyId.");
     }
-  },
+
+    const { ObjectId } = require("mongodb");
+    const db = client.db("BillionEyes_V1");
+    const eventsCollection = db.collection("events");
+
+    // Base agency query
+    let query = {
+      $or: [
+        { "assigned_agency.agencies": agencyId },
+        { "assigned_agencies.agencies": agencyId },
+      ],
+    };
+
+    // Filter by groundStaffId — handle both string and ObjectId stored values
+    if (groundStaffId) {
+      const idAsObjectId = ObjectId.isValid(groundStaffId)
+        ? new ObjectId(groundStaffId)
+        : null;
+
+      query.ground_staff_id = idAsObjectId
+        ? { $in: [groundStaffId, idAsObjectId] } // match either format
+        : groundStaffId;
+    }
+
+    console.log("[getTasksForAgency] Query:", JSON.stringify(query));
+
+    const tasks = await eventsCollection
+      .find(query)
+      .project({
+        _id: 1,
+        event_id: 1,
+        description: 1,
+        timestamp: 1,
+        status: 1,
+        location: 1,
+        incident_type: 1,
+        ground_staff: 1,
+        ground_staff_id: 1,
+        assigned_agency: 1,
+        priority: 1,
+        contact: 1,
+        reporter: 1,
+        casualties: 1,
+        latitude: 1,
+        longitude: 1,
+      })
+      .toArray();
+
+    console.log("[getTasksForAgency] Found tasks:", tasks.length);
+
+    // Serialize _id and ground_staff_id to strings to avoid frontend type mismatch
+    return tasks.map((t) => ({
+      ...t,
+      _id: t._id?.toString(),
+      ground_staff_id: t.ground_staff_id?.toString() || null,
+    }));
+
+  } catch (error) {
+    console.error("[getTasksForAgency] Error:", error.message);
+    throw new Error("Failed to fetch tasks for agency.");
+  }
+},
 
   async getAgencyDashboardCheck(agencyId) {
     try {
