@@ -1,4 +1,4 @@
-const AgencyModel  = require("../models/agency.model");
+const AgencyModel = require("../models/agency.model");
 console.log(AgencyModel);
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -10,7 +10,15 @@ async function createAgency(req, res) {
     console.log("[createAgency] Function called");
     console.log("[createAgency] Request body received:", req.body);
 
-    const { AgencyName, mobileNumber, password, lat, lng, eventResponsibleFor, jurisdiction } = req.body;
+    const {
+      AgencyName,
+      mobileNumber,
+      password,
+      lat,
+      lng,
+      eventResponsibleFor,
+      jurisdiction,
+    } = req.body;
 
     // Validate required fields
     if (!AgencyName || !mobileNumber || !password) {
@@ -38,7 +46,12 @@ async function createAgency(req, res) {
 
     // Validate eventResponsibleFor if provided
     if (eventResponsibleFor && !Array.isArray(eventResponsibleFor)) {
-      return res.status(400).json({ success: false, message: "eventResponsibleFor must be an array" });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "eventResponsibleFor must be an array",
+        });
     }
 
     console.log("[createAgency] Calling createAgencyInDB with:", {
@@ -57,10 +70,13 @@ async function createAgency(req, res) {
       password,
       location,
       eventResponsibleFor,
-      jurisdiction
+      jurisdiction,
     );
 
-    console.log("[createAgency] Agency created successfully with ID:", agencyId);
+    console.log(
+      "[createAgency] Agency created successfully with ID:",
+      agencyId,
+    );
 
     // Send success response
     return res.status(201).json({
@@ -68,7 +84,6 @@ async function createAgency(req, res) {
       message: "Agency created successfully.",
       agencyId,
     });
-
   } catch (error) {
     console.error("[createAgency Controller] Error:", error.message);
     return res.status(500).json({
@@ -97,13 +112,19 @@ async function loginAgency(req, res) {
     // Call the model function to handle login
     const result = await AgencyModel.agencyLogin(mobileNumber, password);
 
-    console.log("[loginAgency] Login successful for AgencyId:", result.agency.AgencyId);
+    console.log(
+      "[loginAgency] Login successful for AgencyId:",
+      result.agency.AgencyId,
+    );
 
     // Generate JWT token
     const token = jwt.sign(
-      { AgencyId: result.agency.AgencyId, mobileNumber: result.agency.mobileNumber },
+      {
+        AgencyId: result.agency.AgencyId,
+        mobileNumber: result.agency.mobileNumber,
+      },
       JWT_SECRET,
-      { expiresIn: JWT_EXPIRATION }
+      { expiresIn: JWT_EXPIRATION },
     );
 
     console.log("[loginAgency] Token generated successfully.");
@@ -198,7 +219,11 @@ async function addNewGroundStaff(req, res) {
       });
     }
 
-    if (!password || typeof password !== "string" || password.trim().length < 6) {
+    if (
+      !password ||
+      typeof password !== "string" ||
+      password.trim().length < 6
+    ) {
       console.warn("[addNewGroundStaff] Invalid password:", password);
       return res.status(400).json({
         success: false,
@@ -207,7 +232,13 @@ async function addNewGroundStaff(req, res) {
     }
 
     // Call the model function to add ground staff
-    const result = await AgencyModel.addGroundStaff(name, number, address, agencyId, password);
+    const result = await AgencyModel.addGroundStaff(
+      name,
+      number,
+      address,
+      agencyId,
+      password,
+    );
 
     console.log("[addNewGroundStaff] Ground staff added successfully:", result);
 
@@ -229,25 +260,29 @@ async function addNewGroundStaff(req, res) {
 const getAgencyDashboard = async (req, res) => {
   try {
     console.log("`[DEBUG] Request Params:", req.params); // Log the request parameters
-    
-      const { agencyId } = req.params;
 
-      if (!agencyId) {
-          return res.status(400).json({ error: "Agency ID is required." });
-      }
+    const { agencyId } = req.params;
 
-      console.log(`Fetching dashboard data for agencyId: ${agencyId}`);
+    if (!agencyId) {
+      return res.status(400).json({ error: "Agency ID is required." });
+    }
 
-      const agencyData = await AgencyModel.getAgencyDashboardCheck(agencyId);
+    console.log(`Fetching dashboard data for agencyId: ${agencyId}`);
 
-      if (!agencyData) {
-          return res.status(404).json({ message: "Agency not found or no events assigned." });
-      }
+    const agencyData = await AgencyModel.getAgencyDashboardCheck(agencyId);
 
-      return res.status(200).json(agencyData);
+    if (!agencyData) {
+      return res
+        .status(404)
+        .json({ message: "Agency not found or no events assigned." });
+    }
+
+    return res.status(200).json(agencyData);
   } catch (error) {
-      console.error("[getAgencyDashboard] Error:", error.message);
-      return res.status(500).json({ error: error.message || "Internal Server Error" });
+    console.error("[getAgencyDashboard] Error:", error.message);
+    return res
+      .status(500)
+      .json({ error: error.message || "Internal Server Error" });
   }
 };
 
@@ -277,21 +312,25 @@ const updateEvenstStatus = async (req, res) => {
     const eventCollection = await AgencyModel.getEventsCollection();
     const result = await eventCollection.updateOne(
       { event_id },
-      { $set: updateFields }
+      { $set: updateFields },
     );
 
     if (result.modifiedCount === 0) {
-      return res.status(404).json({ message: "Event not found or status unchanged." });
+      return res
+        .status(404)
+        .json({ message: "Event not found or status unchanged." });
     }
 
-    return res.status(200).json({ message: "Event status updated successfully." });
+    return res
+      .status(200)
+      .json({ message: "Event status updated successfully." });
   } catch (error) {
     console.error("[updateEventStatus] Error:", error);
     return res.status(500).json({ message: "Server error." });
   }
 };
 
-const  getEventsById= async (req, res)  =>{
+const getEventsById = async (req, res) => {
   try {
     const { event_id } = req.params;
 
@@ -299,7 +338,11 @@ const  getEventsById= async (req, res)  =>{
     const fields = req.query.fields ? req.query.fields.split(",") : [];
     const includeImageUrl = req.query.includeImageUrl !== "false"; // Defaults to true
 
-    const event = await AgencyModel.getEventById(event_id, fields, includeImageUrl);
+    const event = await AgencyModel.getEventById(
+      event_id,
+      fields,
+      includeImageUrl,
+    );
 
     if (!event) {
       return res.status(404).json({ error: "Event not found" });
@@ -310,15 +353,16 @@ const  getEventsById= async (req, res)  =>{
     console.error("Error fetching event:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
-}
-
+};
 
 async function requestOtpAgency(req, res) {
   try {
     const { agencyId, mobileNumber } = req.body;
 
     if (!agencyId || !mobileNumber) {
-      return res.status(400).json({ message: "Agency ID and mobile number are required" });
+      return res
+        .status(400)
+        .json({ message: "Agency ID and mobile number are required" });
     }
 
     if (!/^\d{10}$/.test(mobileNumber.trim())) {
@@ -328,7 +372,9 @@ async function requestOtpAgency(req, res) {
     const agency = await AgencyModel.findOne({ AgencyId: agencyId.trim() });
 
     if (!agency || agency.mobileNumber !== mobileNumber.trim()) {
-      return res.status(400).json({ message: "Invalid agency ID or mobile number" });
+      return res
+        .status(400)
+        .json({ message: "Invalid agency ID or mobile number" });
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -340,7 +386,7 @@ async function requestOtpAgency(req, res) {
     console.error("[requestOtpAgency] Fatal error:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
-};
+}
 
 async function resetPasswordAgency(req, res) {
   try {
@@ -350,7 +396,12 @@ async function resetPasswordAgency(req, res) {
     // Validate required fields
     if (!agencyId || !newPassword) {
       console.warn("[resetPasswordAgency] Missing required fields");
-      return res.status(400).json({ success: false, message: "Agency ID and new password are required" });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Agency ID and new password are required",
+        });
     }
 
     // Find agency
@@ -358,43 +409,52 @@ async function resetPasswordAgency(req, res) {
     console.log("[resetPasswordAgency] Fetched Agency:", agency);
     if (!agency) {
       console.warn("[resetPasswordAgency] Agency not found for ID:", agencyId);
-      return res.status(404).json({ success: false, message: "Agency not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Agency not found" });
     }
 
     // Hash new password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     // Update the agency using our new method (instead of calling agency.save())
-    const success = await AgencyModel.updatePassword(agencyId.trim(), hashedPassword);
+    const success = await AgencyModel.updatePassword(
+      agencyId.trim(),
+      hashedPassword,
+    );
 
     if (success) {
-      console.log("[resetPasswordAgency] Password reset successful for:", agencyId);
-      return res.status(200).json({ success: true, message: "Password reset successful" });
+      console.log(
+        "[resetPasswordAgency] Password reset successful for:",
+        agencyId,
+      );
+      return res
+        .status(200)
+        .json({ success: true, message: "Password reset successful" });
     } else {
       console.warn("[resetPasswordAgency] Password update failed");
-      return res.status(500).json({ success: false, message: "Password update failed" });
+      return res
+        .status(500)
+        .json({ success: false, message: "Password update failed" });
     }
   } catch (error) {
     console.error("[resetPasswordAgency] Error:", error.stack || error.message);
     return res.status(500).json({ success: false, message: "Server error" });
   }
-};
+}
 
-
-async function logoutAgency (req, res) {
-  res.clearCookie("agency_token","refreshToken", {
+async function logoutAgency(req, res) {
+  res.clearCookie("agency_token", "refreshToken", {
     httpOnly: true,
     sameSite: "Strict",
     secure: process.env.NODE_ENV === "production",
   });
-  return res.status(200).json({ success: true, message: "Logged out successfully" });
-};
-
+  return res
+    .status(200)
+    .json({ success: true, message: "Logged out successfully" });
+}
 
 //login
-
-
-
 
 async function allImage(req, res) {
   try {
@@ -407,7 +467,9 @@ async function allImage(req, res) {
 
     if (!event || !Array.isArray(event.incidents)) {
       console.error("Event not found or incidents is not an array.");
-      return res.status(404).json({ message: "Event not found or has no incidents." });
+      return res
+        .status(404)
+        .json({ message: "Event not found or has no incidents." });
     }
 
     // Ensure incidents is an array before processing
@@ -421,13 +483,11 @@ async function allImage(req, res) {
       event_id: event.event_id,
       incidents: incidentImages,
     });
-
   } catch (error) {
-    console.error('[allImage] Error:', error.message);
-    return res.status(500).json({ message: 'Server error.' });
+    console.error("[allImage] Error:", error.message);
+    return res.status(500).json({ message: "Server error." });
   }
 }
-
 
 async function getEventReport(req, res) {
   try {
@@ -437,14 +497,16 @@ async function getEventReport(req, res) {
     const eventReport = await AgencyModel.getEventReportId(event_id);
 
     if (!eventReport) {
-      return res.status(404).json({ success: false, message: "Event not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Event not found" });
     }
 
     // Prepare the response with the required fields
     const response = {
       success: true,
       assignments_time: eventReport.assignments_time || null,
-      AgencyName: eventReport.AgencyName , // Default value if not provided
+      AgencyName: eventReport.AgencyName, // Default value if not provided
       AgencyId: eventReport.AgencyId, // Default value if not provided
       event_id: eventReport.event_id,
       description: eventReport.description,
@@ -481,13 +543,20 @@ async function loginGroundStaff(req, res) {
     // Call the model function to handle groundstaff login
     const result = await AgencyModel.groundStaffLogin(mobileNumber, password);
 
-    console.log("[loginGroundStaff] Login successful for groundStaff:", result.groundStaff.number);
+    console.log(
+      "[loginGroundStaff] Login successful for groundStaff:",
+      result.groundStaff.number,
+    );
 
     // Generate JWT token
     const token = jwt.sign(
-      { groundStaffId: result.groundStaff._id, mobileNumber: result.groundStaff.number, agencyId: result.groundStaff.agencyId },
+      {
+        groundStaffId: result.groundStaff._id,
+        mobileNumber: result.groundStaff.number,
+        agencyId: result.groundStaff.agencyId,
+      },
       JWT_SECRET,
-      { expiresIn: JWT_EXPIRATION }
+      { expiresIn: JWT_EXPIRATION },
     );
 
     console.log("[loginGroundStaff] Token generated successfully.");
@@ -535,12 +604,20 @@ async function getGroundStaffTasks(req, res) {
       });
     }
 
-    console.log("[getGroundStaffTasks] Fetching tasks for agencyId:", agencyId, "groundStaffId:", groundStaffId);
+    console.log(
+      "[getGroundStaffTasks] Fetching tasks for agencyId:",
+      agencyId,
+      "groundStaffId:",
+      groundStaffId,
+    );
 
     // Call the model function to fetch tasks assigned to this specific groundstaff
     const tasks = await AgencyModel.getTasksForAgency(agencyId, groundStaffId);
 
-    console.log("[getGroundStaffTasks] Tasks fetched successfully:", tasks.length);
+    console.log(
+      "[getGroundStaffTasks] Tasks fetched successfully:",
+      tasks.length,
+    );
 
     // Send success response
     return res.status(200).json({
@@ -572,14 +649,20 @@ async function getGroundStaffByAgency(req, res) {
       });
     }
 
-    console.log("[getGroundStaffByAgency] Fetching ground staff for agencyId:", agencyId);
+    console.log(
+      "[getGroundStaffByAgency] Fetching ground staff for agencyId:",
+      agencyId,
+    );
 
     // Call the model function to fetch ground staff
     const groundStaff = await AgencyModel.getGroundStaffByAgencyId(agencyId);
 
     // Check if ground staff data is empty or not found
     if (!groundStaff || groundStaff.length === 0) {
-      console.warn("[getGroundStaffByAgency] No ground staff found for agencyId:", agencyId);
+      console.warn(
+        "[getGroundStaffByAgency] No ground staff found for agencyId:",
+        agencyId,
+      );
       return res.status(404).json({
         success: false,
         message: "No ground staff found for the given agency ID.",
@@ -587,7 +670,10 @@ async function getGroundStaffByAgency(req, res) {
     }
 
     // Log the fetched ground staff data
-    console.log("[getGroundStaffByAgency] Ground staff fetched successfully:", groundStaff);
+    console.log(
+      "[getGroundStaffByAgency] Ground staff fetched successfully:",
+      groundStaff,
+    );
 
     // Send success response
     return res.status(200).json({
@@ -608,30 +694,53 @@ async function getGroundStaffByAgency(req, res) {
 
 async function completeGroundStaffTask(req, res) {
   try {
-    console.log("[completeGroundStaffTask] Called for taskId:", req.params.taskId);
+    console.log(
+      "[completeGroundStaffTask] Called for taskId:",
+      req.params.taskId,
+    );
 
     const { taskId } = req.params;
     const { status, remark, photo } = req.body;
 
+    // Fallback if no auth middleware
+    const groundStaffId =
+      req.user?.groundStaffId || req.body.groundStaffId || null;
+    const agencyId = req.user?.agencyId || req.body.agencyId || null;
+
     // ── Validation ───────────────────────────────────────────────────────
     if (!taskId) {
-      return res.status(400).json({ success: false, message: "Task ID is required." });
+      return res
+        .status(400)
+        .json({ success: false, message: "Task ID is required." });
     }
-
     if (status !== "Completed") {
-      return res.status(400).json({ success: false, message: "Status must be 'Completed'." });
+      return res
+        .status(400)
+        .json({ success: false, message: "Status must be 'Completed'." });
     }
-
     if (!remark || typeof remark !== "string" || remark.trim() === "") {
-      return res.status(400).json({ success: false, message: "Remark is required." });
+      return res
+        .status(400)
+        .json({ success: false, message: "Remark is required." });
+    }
+    if (
+      !photo ||
+      typeof photo !== "string" ||
+      !photo.startsWith("data:image")
+    ) {
+      return res
+        .status(400)
+        .json({ success: false, message: "A valid base64 photo is required." });
     }
 
-    if (!photo || typeof photo !== "string" || !photo.startsWith("data:image")) {
-      return res.status(400).json({ success: false, message: "A valid base64 photo is required." });
-    }
-
-    // ── Call model ───────────────────────────────────────────────────────
-    const result = await AgencyModel.completeGroundStaffTask(taskId, remark.trim(), photo);
+    // ── Call model with all 5 args ────────────────────────────────────────
+    const result = await AgencyModel.completeGroundStaffTask(
+      taskId,
+      groundStaffId, // ← was missing
+      agencyId, // ← was missing
+      remark.trim(),
+      photo,
+    );
 
     return res.status(200).json({
       success: true,
@@ -651,25 +760,34 @@ async function completeGroundStaffTask(req, res) {
 async function listAgencies(req, res) {
   try {
     const { eventResponsibleFor, type } = req.query;
-    const agencies = await AgencyModel.listAgencies({ eventResponsibleFor, type });
+    const agencies = await AgencyModel.listAgencies({
+      eventResponsibleFor,
+      type,
+    });
     return res.status(200).json({ success: true, data: agencies });
   } catch (err) {
-    console.error('[listAgencies] Error:', err);
-    return res.status(500).json({ success: false, message: 'Server error' });
+    console.error("[listAgencies] Error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 }
 
 async function getAgencyById(req, res) {
   try {
     const { agencyId } = req.params;
-    if (!agencyId) return res.status(400).json({ success: false, message: 'agencyId required' });
+    if (!agencyId)
+      return res
+        .status(400)
+        .json({ success: false, message: "agencyId required" });
     const agency = await AgencyModel.findAgencyByAgencyId(agencyId);
-    if (!agency) return res.status(404).json({ success: false, message: 'Agency not found' });
+    if (!agency)
+      return res
+        .status(404)
+        .json({ success: false, message: "Agency not found" });
     delete agency.password;
     return res.status(200).json({ success: true, data: agency });
   } catch (err) {
-    console.error('[getAgencyById] Error:', err);
-    return res.status(500).json({ success: false, message: 'Server error' });
+    console.error("[getAgencyById] Error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 }
 
@@ -677,26 +795,41 @@ async function updateAgency(req, res) {
   try {
     const { agencyId } = req.params;
     const updates = req.body;
-    if (!agencyId) return res.status(400).json({ success: false, message: 'agencyId required' });
+    if (!agencyId)
+      return res
+        .status(400)
+        .json({ success: false, message: "agencyId required" });
     const ok = await AgencyModel.updateAgency(agencyId, updates);
-    if (!ok) return res.status(404).json({ success: false, message: 'Agency not found or nothing updated' });
-    return res.status(200).json({ success: true, message: 'Agency updated' });
+    if (!ok)
+      return res
+        .status(404)
+        .json({
+          success: false,
+          message: "Agency not found or nothing updated",
+        });
+    return res.status(200).json({ success: true, message: "Agency updated" });
   } catch (err) {
-    console.error('[updateAgency] Error:', err);
-    return res.status(500).json({ success: false, message: 'Server error' });
+    console.error("[updateAgency] Error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 }
 
 async function deleteAgency(req, res) {
   try {
     const { agencyId } = req.params;
-    if (!agencyId) return res.status(400).json({ success: false, message: 'agencyId required' });
+    if (!agencyId)
+      return res
+        .status(400)
+        .json({ success: false, message: "agencyId required" });
     const ok = await AgencyModel.deleteAgency(agencyId);
-    if (!ok) return res.status(404).json({ success: false, message: 'Agency not found' });
-    return res.status(200).json({ success: true, message: 'Agency deleted' });
+    if (!ok)
+      return res
+        .status(404)
+        .json({ success: false, message: "Agency not found" });
+    return res.status(200).json({ success: true, message: "Agency deleted" });
   } catch (err) {
-    console.error('[deleteAgency] Error:', err);
-    return res.status(500).json({ success: false, message: 'Server error' });
+    console.error("[deleteAgency] Error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 }
 
@@ -705,21 +838,29 @@ async function searchAgencies(req, res) {
     const lat = Number(req.query.lat);
     const lng = Number(req.query.lng);
     const radius = req.query.radius ? Number(req.query.radius) : 1000;
-    const mode = req.query.mode || 'location';
+    const mode = req.query.mode || "location";
 
-    if (Number.isNaN(lat) || Number.isNaN(lng)) return res.status(400).json({ success: false, message: 'lat and lng query params required' });
+    if (Number.isNaN(lat) || Number.isNaN(lng))
+      return res
+        .status(400)
+        .json({ success: false, message: "lat and lng query params required" });
 
-    const agencies = await AgencyModel.searchAgenciesByPoint(lat, lng, radius, mode);
+    const agencies = await AgencyModel.searchAgenciesByPoint(
+      lat,
+      lng,
+      radius,
+      mode,
+    );
     return res.status(200).json({ success: true, data: agencies });
   } catch (err) {
-    console.error('[searchAgencies] Error:', err);
-    return res.status(500).json({ success: false, message: 'Server error' });
+    console.error("[searchAgencies] Error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 }
 
 module.exports = {
   createAgency,
-  
+
   getAgencyDashboard,
   // getEventStatus,
   updateEvenstStatus,
@@ -730,7 +871,7 @@ module.exports = {
   getEventReport,
   getGroundStaffByAgency,
   getGroundStaffTasks,
-  logoutAgency, 
+  logoutAgency,
   // addGroundStaff,
   // deleteIncident,
   resetPasswordAgency,
@@ -742,7 +883,7 @@ module.exports = {
   getAgencyById,
   updateAgency,
   deleteAgency,
-  searchAgencies
+  searchAgencies,
 
-//   getGroundStaff,
+  //   getGroundStaff,
 };

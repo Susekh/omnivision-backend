@@ -1250,7 +1250,7 @@ const AgencyModel = {
       // ── Update the event document ────────────────────────────────────────
       const result = await eventsCol.updateOne(query, {
         $set: {
-          status: "Completed",
+          status: "closed",
           completion: {
             ground_staff_id: groundStaffId,
             agency_id: agencyId,
