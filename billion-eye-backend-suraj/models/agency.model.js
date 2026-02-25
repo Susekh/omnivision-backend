@@ -304,7 +304,9 @@ const AgencyModel = {
 
     if (!password || typeof password !== "string" || password.length < 6) {
       console.error("[addGroundStaff] Invalid password");
-      throw new Error("Invalid password. Password must be at least 6 characters.");
+      throw new Error(
+        "Invalid password. Password must be at least 6 characters.",
+      );
     }
 
     // Hash password
@@ -394,17 +396,31 @@ const AgencyModel = {
     try {
       const groundStaffCollection = await getGroundStaffCollection();
 
-      console.log("[groundStaffLogin] Searching for groundstaff with number:", mobileNumber);
-      const groundStaff = await groundStaffCollection.findOne({ number: mobileNumber });
+      console.log(
+        "[groundStaffLogin] Searching for groundstaff with number:",
+        mobileNumber,
+      );
+      const groundStaff = await groundStaffCollection.findOne({
+        number: mobileNumber,
+      });
 
       if (!groundStaff) {
-        console.error("[groundStaffLogin] No groundstaff found with number:", mobileNumber);
-        console.log("[groundStaffLogin] Available groundstaff in DB:", await groundStaffCollection.countDocuments());
+        console.error(
+          "[groundStaffLogin] No groundstaff found with number:",
+          mobileNumber,
+        );
+        console.log(
+          "[groundStaffLogin] Available groundstaff in DB:",
+          await groundStaffCollection.countDocuments(),
+        );
         throw new Error("Invalid mobile number or password.");
       }
 
       if (!groundStaff.password) {
-        console.error("[groundStaffLogin] Groundstaff found but no password field:", groundStaff._id);
+        console.error(
+          "[groundStaffLogin] Groundstaff found but no password field:",
+          groundStaff._id,
+        );
         throw new Error("Invalid mobile number or password.");
       }
 
@@ -434,7 +450,10 @@ const AgencyModel = {
       }
 
       if (!isPasswordValid) {
-        console.error("[groundStaffLogin] Password mismatch for user:", mobileNumber);
+        console.error(
+          "[groundStaffLogin] Password mismatch for user:",
+          mobileNumber,
+        );
         throw new Error("Invalid mobile number or password.");
       }
 
@@ -459,74 +478,94 @@ const AgencyModel = {
   },
 
   async getTasksForAgency(agencyId, groundStaffId = null) {
-  console.log("[getTasksForAgency] Fetching tasks for agencyId:", agencyId, "groundStaffId:", groundStaffId);
+    console.log(
+      "[getTasksForAgency] Fetching tasks for agencyId:",
+      agencyId,
+      "groundStaffId:",
+      groundStaffId,
+    );
 
-  try {
-    if (!agencyId || typeof agencyId !== "string" || agencyId.trim() === "") {
-      throw new Error("Invalid agencyId.");
+    try {
+      if (!agencyId || typeof agencyId !== "string" || agencyId.trim() === "") {
+        throw new Error("Invalid agencyId.");
+      }
+
+      const { ObjectId } = require("mongodb");
+      const db = client.db("BillionEyes_V1");
+      const eventsCollection = db.collection("events");
+
+      // ── Base agency query ────────────────────────────────────────────────
+      let query = {
+        $or: [
+          { "assigned_agency.agencies": agencyId },
+          { "assigned_agencies.agencies": agencyId },
+        ],
+      };
+
+      // ── Filter by ground staff ───────────────────────────────────────────
+      if (groundStaffId) {
+        // Look up the staff member's name from ground_staff collection
+        const gsCol = await getGroundStaffCollection();
+        const staffMember = await gsCol.findOne({
+          _id: ObjectId.isValid(groundStaffId)
+            ? new ObjectId(groundStaffId)
+            : groundStaffId,
+        });
+
+        console.log(
+          "[getTasksForAgency] Found staff member:",
+          staffMember?.name,
+        );
+
+        if (staffMember?.name) {
+          // Match by name (case-insensitive)
+          query.ground_staff = {
+            $regex: new RegExp(`^${staffMember.name.trim()}$`, "i"),
+          };
+        } else {
+          // Staff not found → return empty
+          console.warn(
+            "[getTasksForAgency] Staff member not found for id:",
+            groundStaffId,
+          );
+          return [];
+        }
+      }
+
+      console.log("[getTasksForAgency] Final query:", JSON.stringify(query));
+
+      const tasks = await eventsCollection
+        .find(query)
+        .project({
+          _id: 1,
+          event_id: 1,
+          description: 1,
+          timestamp: 1,
+          status: 1,
+          location: 1,
+          incident_type: 1,
+          ground_staff: 1,
+          ground_staff_id: 1,
+          assigned_agency: 1,
+          assignment_time: 1,
+          priority: 1,
+          contact: 1,
+          casualties: 1,
+        })
+        .toArray();
+
+      console.log("[getTasksForAgency] Found tasks:", tasks.length);
+
+      // Serialize _id to string
+      return tasks.map((t) => ({
+        ...t,
+        _id: t._id?.toString(),
+      }));
+    } catch (error) {
+      console.error("[getTasksForAgency] Error:", error.message);
+      throw new Error("Failed to fetch tasks for agency.");
     }
-
-    const { ObjectId } = require("mongodb");
-    const db = client.db("BillionEyes_V1");
-    const eventsCollection = db.collection("events");
-
-    // Base agency query
-    let query = {
-      $or: [
-        { "assigned_agency.agencies": agencyId },
-        { "assigned_agencies.agencies": agencyId },
-      ],
-    };
-
-    // Filter by groundStaffId — handle both string and ObjectId stored values
-    if (groundStaffId) {
-      const idAsObjectId = ObjectId.isValid(groundStaffId)
-        ? new ObjectId(groundStaffId)
-        : null;
-
-      query.ground_staff_id = idAsObjectId
-        ? { $in: [groundStaffId, idAsObjectId] } // match either format
-        : groundStaffId;
-    }
-
-    console.log("[getTasksForAgency] Query:", JSON.stringify(query));
-
-    const tasks = await eventsCollection
-      .find(query)
-      .project({
-        _id: 1,
-        event_id: 1,
-        description: 1,
-        timestamp: 1,
-        status: 1,
-        location: 1,
-        incident_type: 1,
-        ground_staff: 1,
-        ground_staff_id: 1,
-        assigned_agency: 1,
-        priority: 1,
-        contact: 1,
-        reporter: 1,
-        casualties: 1,
-        latitude: 1,
-        longitude: 1,
-      })
-      .toArray();
-
-    console.log("[getTasksForAgency] Found tasks:", tasks.length);
-
-    // Serialize _id and ground_staff_id to strings to avoid frontend type mismatch
-    return tasks.map((t) => ({
-      ...t,
-      _id: t._id?.toString(),
-      ground_staff_id: t.ground_staff_id?.toString() || null,
-    }));
-
-  } catch (error) {
-    console.error("[getTasksForAgency] Error:", error.message);
-    throw new Error("Failed to fetch tasks for agency.");
-  }
-},
+  },
 
   async getAgencyDashboardCheck(agencyId) {
     try {
@@ -1147,60 +1186,69 @@ const AgencyModel = {
     return await col.find(query).project({ password: 0 }).toArray();
   },
 
-async completeGroundStaffTask(taskId, groundStaffId, agencyId, remark, base64Photo) {
-  try {
-    const { ObjectId } = require("mongodb");
+  async completeGroundStaffTask(
+    taskId,
+    groundStaffId,
+    agencyId,
+    remark,
+    base64Photo,
+  ) {
+    try {
+      const { ObjectId } = require("mongodb");
 
-    // ── Upload photo to S3 ───────────────────────────────────────────────
-    let photoUrl = null;
+      // ── Upload photo to S3 ───────────────────────────────────────────────
+      let photoUrl = null;
 
-    if (base64Photo) {
-      const matches = base64Photo.match(/^data:(.+);base64,(.+)$/);
-      if (!matches) throw new Error("Invalid base64 image format.");
+      if (base64Photo) {
+        const matches = base64Photo.match(/^data:(.+);base64,(.+)$/);
+        if (!matches) throw new Error("Invalid base64 image format.");
 
-      const imageBuffer = Buffer.from(matches[2], "base64");
+        const imageBuffer = Buffer.from(matches[2], "base64");
 
-      const compressedBuffer = await sharp(imageBuffer)
-        .resize({ width: 800, withoutEnlargement: true })
-        .jpeg({ quality: 70 })
-        .toBuffer();
+        const compressedBuffer = await sharp(imageBuffer)
+          .resize({ width: 800, withoutEnlargement: true })
+          .jpeg({ quality: 70 })
+          .toBuffer();
 
-      const year = new Date().getFullYear();
-      const filename = `completion_${taskId}_${Date.now()}.jpg`;
-      const s3Key = `${year}/completions/${filename}`;
+        const year = new Date().getFullYear();
+        const filename = `completion_${taskId}_${Date.now()}.jpg`;
+        const s3Key = `${year}/completions/${filename}`;
 
-      console.log("[completeGroundStaffTask] Uploading to S3:", s3Key);
+        console.log("[completeGroundStaffTask] Uploading to S3:", s3Key);
 
-      await s3.putObject({
-        Bucket: "billion-eyes-images",
-        Key: s3Key,
-        Body: compressedBuffer,
-        ContentType: "image/jpeg",
-      }).promise();
+        await s3
+          .putObject({
+            Bucket: "billion-eyes-images",
+            Key: s3Key,
+            Body: compressedBuffer,
+            ContentType: "image/jpeg",
+          })
+          .promise();
 
-      photoUrl = `${process.env.AWS_S3_ENDPOINT}/billion-eyes-images/${s3Key}`;
-      console.log("[completeGroundStaffTask] S3 upload successful:", photoUrl);
-    }
+        photoUrl = `${process.env.AWS_S3_ENDPOINT}/billion-eyes-images/${s3Key}`;
+        console.log(
+          "[completeGroundStaffTask] S3 upload successful:",
+          photoUrl,
+        );
+      }
 
-    // ── Find event by _id (ObjectId) or event_id (string) ───────────────
-    const eventsCol = await this.getEventsCollection();
+      // ── Find event by _id (ObjectId) or event_id (string) ───────────────
+      const eventsCol = await this.getEventsCollection();
 
-    const query = ObjectId.isValid(taskId)
-      ? { _id: new ObjectId(taskId) }
-      : { event_id: taskId };
+      const query = ObjectId.isValid(taskId)
+        ? { _id: new ObjectId(taskId) }
+        : { event_id: taskId };
 
-    console.log("[completeGroundStaffTask] Querying event with:", query);
+      console.log("[completeGroundStaffTask] Querying event with:", query);
 
-    // Verify event exists first
-    const event = await eventsCol.findOne(query);
-    if (!event) throw new Error("Task not found.");
+      // Verify event exists first
+      const event = await eventsCol.findOne(query);
+      if (!event) throw new Error("Task not found.");
 
-    console.log("[completeGroundStaffTask] Event found:", event.event_id);
+      console.log("[completeGroundStaffTask] Event found:", event.event_id);
 
-    // ── Update the event document ────────────────────────────────────────
-    const result = await eventsCol.updateOne(
-      query,
-      {
+      // ── Update the event document ────────────────────────────────────────
+      const result = await eventsCol.updateOne(query, {
         $set: {
           status: "Completed",
           completion: {
@@ -1211,19 +1259,21 @@ async completeGroundStaffTask(taskId, groundStaffId, agencyId, remark, base64Pho
             completed_at: new Date(),
           },
         },
-      }
-    );
+      });
 
-    console.log("[completeGroundStaffTask] Update result:", result.modifiedCount);
+      console.log(
+        "[completeGroundStaffTask] Update result:",
+        result.modifiedCount,
+      );
 
-    if (result.modifiedCount === 0) throw new Error("Failed to update task.");
+      if (result.modifiedCount === 0) throw new Error("Failed to update task.");
 
-    return { success: true, photoUrl };
-  } catch (error) {
-    console.error("[completeGroundStaffTask] Error:", error.message);
-    throw new Error(error.message || "Failed to complete task.");
-  }
-},
+      return { success: true, photoUrl };
+    } catch (error) {
+      console.error("[completeGroundStaffTask] Error:", error.message);
+      throw new Error(error.message || "Failed to complete task.");
+    }
+  },
 };
 
 module.exports = AgencyModel;
@@ -1238,5 +1288,3 @@ module.exports = AgencyModel;
 //   console.log("[updateOTP] Updated agency OTP:", result.modifiedCount);
 //   return result.modifiedCount > 0;
 // }
-
-
