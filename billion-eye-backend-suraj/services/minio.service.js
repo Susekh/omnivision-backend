@@ -61,13 +61,25 @@ const AWS = require('aws-sdk');
 require('dotenv').config();
 
 // Initialize AWS S3 client
+// const s3 = new AWS.S3({
+//   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+//   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+//   endpoint: process.env.AWS_S3_ENDPOINT, // e.g., 'https://staas-bbs1.cloud.gov.in/'
+//   s3ForcePathStyle: true,
+//   signatureVersion: 'v4',
+//   region: process.env.AWS_REGION || 'us-east-1', // if required
+// });
+
 const s3 = new AWS.S3({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  endpoint: process.env.AWS_S3_ENDPOINT, // e.g., 'https://staas-bbs1.cloud.gov.in/'
+  endpoint: process.env.AWS_S3_ENDPOINT,
+  region: process.env.AWS_REGION, // Add this line
   s3ForcePathStyle: true,
-  signatureVersion: 'v4',
-  region: process.env.AWS_REGION || 'us-east-1', // if required
+  signatureVersion: "v4",
+  httpOptions: {
+    timeout: 200,
+  },
 });
 
 // Upload File to S3
