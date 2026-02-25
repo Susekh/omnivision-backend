@@ -1195,59 +1195,56 @@ const AgencyModel = {
   ) {
     try {
       const { ObjectId } = require("mongodb");
+      const { uploadImageToS3 } = require("./s3.service"); // adjust path to your s3 file
 
-      // ── Upload photo to S3 ───────────────────────────────────────────────
+      // ── Convert base64 → buffer and upload via existing utility ─────────
       let photoUrl = null;
 
       if (base64Photo) {
         const matches = base64Photo.match(/^data:(.+);base64,(.+)$/);
         if (!matches) throw new Error("Invalid base64 image format.");
 
+        const mimeType = matches[1];
         const imageBuffer = Buffer.from(matches[2], "base64");
 
+        // Compress with sharp
         const compressedBuffer = await sharp(imageBuffer)
           .resize({ width: 800, withoutEnlargement: true })
           .jpeg({ quality: 70 })
           .toBuffer();
 
         const year = new Date().getFullYear();
-        const filename = `completion_${taskId}_${Date.now()}.jpg`;
-        const s3Key = `${year}/completions/${filename}`;
+        const objectName = `${year}/completions/completion_${taskId}_${Date.now()}.jpg`;
 
-        console.log("[completeGroundStaffTask] Uploading to S3:", s3Key);
+        // Use your existing utility
+        const uploadResult = await uploadImageToS3(
+          { buffer: compressedBuffer, mimetype: "image/jpeg" },
+          "billion-eyes-images",
+          objectName,
+        );
 
-        await s3
-          .putObject({
-            Bucket: "billion-eyes-images",
-            Key: s3Key,
-            Body: compressedBuffer,
-            ContentType: "image/jpeg",
-          })
-          .promise();
+        if (!uploadResult.status) throw new Error("Photo upload failed.");
 
-        photoUrl = `${process.env.AWS_S3_ENDPOINT}/billion-eyes-images/${s3Key}`;
+        photoUrl = `${process.env.AWS_S3_ENDPOINT}/billion-eyes-images/${objectName}`;
         console.log(
           "[completeGroundStaffTask] S3 upload successful:",
           photoUrl,
         );
       }
 
-      // ── Find event by _id (ObjectId) or event_id (string) ───────────────
+      // ── Find event ───────────────────────────────────────────────────────
       const eventsCol = await this.getEventsCollection();
 
       const query = ObjectId.isValid(taskId)
         ? { _id: new ObjectId(taskId) }
         : { event_id: taskId };
 
-      console.log("[completeGroundStaffTask] Querying event with:", query);
-
-      // Verify event exists first
       const event = await eventsCol.findOne(query);
       if (!event) throw new Error("Task not found.");
 
       console.log("[completeGroundStaffTask] Event found:", event.event_id);
 
-      // ── Update the event document ────────────────────────────────────────
+      // ── Update event document ────────────────────────────────────────────
       const result = await eventsCol.updateOne(query, {
         $set: {
           status: "closed",
@@ -1261,12 +1258,12 @@ const AgencyModel = {
         },
       });
 
+      if (result.modifiedCount === 0) throw new Error("Failed to update task.");
+
       console.log(
         "[completeGroundStaffTask] Update result:",
         result.modifiedCount,
       );
-
-      if (result.modifiedCount === 0) throw new Error("Failed to update task.");
 
       return { success: true, photoUrl };
     } catch (error) {
