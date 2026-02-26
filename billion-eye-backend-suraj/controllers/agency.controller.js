@@ -713,7 +713,7 @@ async function completeGroundStaffTask(req, res) {
         .status(400)
         .json({ success: false, message: "Task ID is required." });
     }
-    if (status !== "Completed" || status !== "closed") {
+    if (status !== "Completed" && status !== "closed") {
       return res
         .status(400)
         .json({ success: false, message: "Status must be 'Completed'." });
