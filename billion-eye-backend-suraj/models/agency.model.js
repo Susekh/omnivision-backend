@@ -566,7 +566,9 @@ const AgencyModel = {
           ground_staff_id: 1,
           assigned_agency: 1,
           assignment_time: 1,
+          completion: 1,
           priority: 1,
+          incidents : 1,
           contact: 1,
           casualties: 1,
         })
