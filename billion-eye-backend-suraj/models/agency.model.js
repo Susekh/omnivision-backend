@@ -422,6 +422,12 @@ const AgencyModel = {
         number: mobileNumber,
       });
 
+      const agencyCollection = await getAgencyCollection();
+
+      const agency = await agencyCollection.findOne({
+              AgencyId: groundStaff.agencyId,
+            });
+
       if (!groundStaff) {
         console.error(
           "[groundStaffLogin] No groundstaff found with number:",
@@ -486,6 +492,7 @@ const AgencyModel = {
           name: groundStaff.name,
           number: groundStaff.number,
           agencyId: groundStaff.agencyId,
+          agencyName: agency?.AgencyName || null,
           address: groundStaff.address,
         },
       };

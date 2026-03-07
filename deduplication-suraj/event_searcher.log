@@ -8062,3 +8062,143 @@ Traceback (most recent call last):
     for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
                ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 socket.gaierror: [Errno 11001] getaddrinfo failed
+2026-02-20 01:48:09,830 - DEBUG - {"topologyId": {"$oid": "69977001addfb1cc35a4ff73"}, "message": "Starting topology monitoring"}
+2026-02-20 01:48:09,831 - DEBUG - {"topologyId": {"$oid": "69977001addfb1cc35a4ff73"}, "previousDescription": "<TopologyDescription id: 69977001addfb1cc35a4ff73, topology_type: Unknown, servers: []>", "newDescription": "<TopologyDescription id: 69977001addfb1cc35a4ff73, topology_type: Unknown, servers: [<ServerDescription ('mongodb', 27017) server_type: Unknown, rtt: None>]>", "message": "Topology description changed"}
+2026-02-20 01:48:09,831 - DEBUG - {"topologyId": {"$oid": "69977001addfb1cc35a4ff73"}, "serverHost": "mongodb", "serverPort": 27017, "message": "Starting server monitoring"}
+2026-02-20 01:48:09,832 - DEBUG - {"clientId": {"$oid": "69977001addfb1cc35a4ff73"}, "message": "Connection pool created", "serverHost": "mongodb", "serverPort": 27017}
+2026-02-20 01:48:09,833 - INFO - Connected to MongoDB.
+2026-02-20 01:48:09,833 - INFO - EventSearcher initialized with database connection.
+2026-02-20 01:48:10,200 - DEBUG - Changing event name from creating-client-class.iot-data to creating-client-class.iot-data-plane
+2026-02-20 01:48:10,202 - DEBUG - Changing event name from before-call.apigateway to before-call.api-gateway
+2026-02-20 01:48:10,203 - DEBUG - Changing event name from request-created.machinelearning.Predict to request-created.machine-learning.Predict
+2026-02-20 01:48:10,205 - DEBUG - Changing event name from before-parameter-build.autoscaling.CreateLaunchConfiguration to before-parameter-build.auto-scaling.CreateLaunchConfiguration
+2026-02-20 01:48:10,205 - DEBUG - Changing event name from before-parameter-build.route53 to before-parameter-build.route-53
+2026-02-20 01:48:10,206 - DEBUG - Changing event name from request-created.cloudsearchdomain.Search to request-created.cloudsearch-domain.Search
+2026-02-20 01:48:10,207 - DEBUG - Changing event name from docs.*.autoscaling.CreateLaunchConfiguration.complete-section to docs.*.auto-scaling.CreateLaunchConfiguration.complete-section
+2026-02-20 01:48:10,209 - DEBUG - Changing event name from before-parameter-build.logs.CreateExportTask to before-parameter-build.cloudwatch-logs.CreateExportTask
+2026-02-20 01:48:10,209 - DEBUG - Changing event name from docs.*.logs.CreateExportTask.complete-section to docs.*.cloudwatch-logs.CreateExportTask.complete-section
+2026-02-20 01:48:10,209 - DEBUG - Changing event name from before-parameter-build.cloudsearchdomain.Search to before-parameter-build.cloudsearch-domain.Search
+2026-02-20 01:48:10,209 - DEBUG - Changing event name from docs.*.cloudsearchdomain.Search.complete-section to docs.*.cloudsearch-domain.Search.complete-section
+2026-02-20 01:48:10,229 - DEBUG - Loading JSON file: C:\Users\samee\AppData\Local\Programs\Python\Python313\Lib\site-packages\botocore\data\endpoints.json
+2026-02-20 01:48:10,265 - DEBUG - Loading JSON file: C:\Users\samee\AppData\Local\Programs\Python\Python313\Lib\site-packages\botocore\data\sdk-default-configuration.json
+2026-02-20 01:48:10,265 - DEBUG - Event choose-service-name: calling handler <function handle_service_name_alias at 0x000001E7F4E2B100>
+2026-02-20 01:48:10,610 - DEBUG - Loading JSON file: C:\Users\samee\AppData\Local\Programs\Python\Python313\Lib\site-packages\botocore\data\s3\2006-03-01\service-2.json.gz
+2026-02-20 01:48:10,738 - DEBUG - Loading JSON file: C:\Users\samee\AppData\Local\Programs\Python\Python313\Lib\site-packages\botocore\data\s3\2006-03-01\endpoint-rule-set-1.json.gz
+2026-02-20 01:48:10,770 - DEBUG - Loading JSON file: C:\Users\samee\AppData\Local\Programs\Python\Python313\Lib\site-packages\botocore\data\partitions.json
+2026-02-20 01:48:10,772 - DEBUG - Event creating-client-class.s3: calling handler <function add_generate_presigned_post at 0x000001E7F4B89E40>
+2026-02-20 01:48:10,773 - DEBUG - Event creating-client-class.s3: calling handler <function lazy_call.<locals>._handler at 0x000001E7F4EC3060>
+2026-02-20 01:48:10,911 - DEBUG - Event creating-client-class.s3: calling handler <function add_generate_presigned_url at 0x000001E7F4B89BC0>
+2026-02-20 01:48:10,913 - DEBUG - Setting s3 timeout as (60, 60)
+2026-02-20 01:48:10,934 - DEBUG - Loading JSON file: C:\Users\samee\AppData\Local\Programs\Python\Python313\Lib\site-packages\botocore\data\_retry.json
+2026-02-20 01:48:10,935 - DEBUG - Registering retry handlers for service: s3
+2026-02-20 01:48:10,935 - DEBUG - Registering S3 region redirector handler
+2026-02-20 01:48:10,936 - DEBUG - Registering S3Express Identity Resolver
+2026-02-20 01:48:10,937 - DEBUG - {"topologyId": {"$oid": "69977002addfb1cc35a4ff74"}, "message": "Starting topology monitoring"}
+2026-02-20 01:48:10,937 - DEBUG - {"topologyId": {"$oid": "69977002addfb1cc35a4ff74"}, "previousDescription": "<TopologyDescription id: 69977002addfb1cc35a4ff74, topology_type: Unknown, servers: []>", "newDescription": "<TopologyDescription id: 69977002addfb1cc35a4ff74, topology_type: Unknown, servers: [<ServerDescription ('mongodb', 27017) server_type: Unknown, rtt: None>]>", "message": "Topology description changed"}
+2026-02-20 01:48:10,937 - DEBUG - {"topologyId": {"$oid": "69977002addfb1cc35a4ff74"}, "serverHost": "mongodb", "serverPort": 27017, "message": "Starting server monitoring"}
+2026-02-20 01:48:10,938 - DEBUG - {"clientId": {"$oid": "69977002addfb1cc35a4ff74"}, "message": "Connection pool created", "serverHost": "mongodb", "serverPort": 27017}
+2026-02-20 01:48:10,939 - INFO - EventSearcher initialized with database connection.
+2026-02-20 01:48:10,941 - DEBUG - Using SelectPoller
+2026-02-20 01:48:10,943 - DEBUG - Created default connection workflow <pika.adapters.utils.connection_workflow.AMQPConnectionWorkflow object at 0x000001E7F560D940>
+2026-02-20 01:48:10,943 - DEBUG - Starting AMQP Connection workflow asynchronously.
+2026-02-20 01:48:10,943 - DEBUG - call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x000001E7F550A980> with deadline=219942.0586974 and callback=functools.partial(<bound method AMQPConnectionWorkflow._start_new_cycle_async of <pika.adapters.utils.connection_workflow.AMQPConnectionWorkflow object at 0x000001E7F560D940>>, first=True); now=219942.0586974; delay=0
+2026-02-20 01:48:10,943 - DEBUG - Beginning a new AMQP connection workflow cycle; attempts remaining after this: 0
+2026-02-20 01:48:10,943 - DEBUG - call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x000001E7E4DE63B0> with deadline=219942.0590701 and callback=<bound method AMQPConnectionWorkflow._try_next_config_async of <pika.adapters.utils.connection_workflow.AMQPConnectionWorkflow object at 0x000001E7F560D940>>; now=219942.0590701; delay=0
+2026-02-20 01:48:10,944 - DEBUG - _try_next_config_async: 'rabbitmq':5672
+2026-02-20 01:48:17,087 - DEBUG - {"topologyId": {"$oid": "69977001addfb1cc35a4ff73"}, "serverHost": "mongodb", "serverPort": 27017, "awaited": false, "durationMS": 7254.441900004167, "failure": "\"AutoReconnect('mongodb:27017: [Errno 11001] getaddrinfo failed (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')\"", "message": "Server heartbeat failed"}
+2026-02-20 01:48:17,087 - DEBUG - {"topologyId": {"$oid": "69977001addfb1cc35a4ff73"}, "previousDescription": "<TopologyDescription id: 69977001addfb1cc35a4ff73, topology_type: Unknown, servers: [<ServerDescription ('mongodb', 27017) server_type: Unknown, rtt: None>]>", "newDescription": "<TopologyDescription id: 69977001addfb1cc35a4ff73, topology_type: Unknown, servers: [<ServerDescription ('mongodb', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('mongodb:27017: [Errno 11001] getaddrinfo failed (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>", "message": "Topology description changed"}
+2026-02-20 01:48:18,187 - DEBUG - {"topologyId": {"$oid": "69977002addfb1cc35a4ff74"}, "serverHost": "mongodb", "serverPort": 27017, "awaited": false, "durationMS": 7248.974899994209, "failure": "\"AutoReconnect('mongodb:27017: [Errno 11001] getaddrinfo failed (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')\"", "message": "Server heartbeat failed"}
+2026-02-20 01:48:18,188 - ERROR - Address resolution failed: gaierror(11001, 'getaddrinfo failed')
+2026-02-20 01:48:18,188 - DEBUG - {"topologyId": {"$oid": "69977002addfb1cc35a4ff74"}, "previousDescription": "<TopologyDescription id: 69977002addfb1cc35a4ff74, topology_type: Unknown, servers: [<ServerDescription ('mongodb', 27017) server_type: Unknown, rtt: None>]>", "newDescription": "<TopologyDescription id: 69977002addfb1cc35a4ff74, topology_type: Unknown, servers: [<ServerDescription ('mongodb', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('mongodb:27017: [Errno 11001] getaddrinfo failed (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>", "message": "Topology description changed"}
+2026-02-20 01:48:18,189 - DEBUG - add_callback_threadsafe: added callback=<bound method _AddressResolver._dispatch_result of <pika.adapters.utils.selector_ioloop_adapter._AddressResolver object at 0x000001E7F560DA90>>
+2026-02-20 01:48:18,189 - DEBUG - process_timeouts: invoking callback=<bound method _AddressResolver._dispatch_result of <pika.adapters.utils.selector_ioloop_adapter._AddressResolver object at 0x000001E7F560DA90>>
+2026-02-20 01:48:18,189 - DEBUG - Invoking asynchronous getaddrinfo() completion callback; host='rabbitmq'
+2026-02-20 01:48:18,189 - ERROR - getaddrinfo failed: gaierror(11001, 'getaddrinfo failed').
+2026-02-20 01:48:18,189 - ERROR - AMQP connection workflow failed: AMQPConnectionWorkflowFailed: 1 exceptions in all; last exception - gaierror(11001, 'getaddrinfo failed'); first exception - None.
+2026-02-20 01:48:18,189 - ERROR - AMQPConnectionWorkflow - reporting failure: AMQPConnectionWorkflowFailed: 1 exceptions in all; last exception - gaierror(11001, 'getaddrinfo failed'); first exception - None
+2026-02-20 01:48:18,189 - ERROR - Connection workflow failed: AMQPConnectionWorkflowFailed: 1 exceptions in all; last exception - gaierror(11001, 'getaddrinfo failed'); first exception - None
+2026-02-20 01:48:18,190 - ERROR - Error in _create_connection().
+Traceback (most recent call last):
+  File "C:\Users\samee\AppData\Local\Programs\Python\Python313\Lib\site-packages\pika\adapters\blocking_connection.py", line 451, in _create_connection
+    raise self._reap_last_connection_workflow_error(error)
+  File "C:\Users\samee\AppData\Local\Programs\Python\Python313\Lib\site-packages\pika\adapters\utils\selector_ioloop_adapter.py", line 565, in _resolve
+    result = socket.getaddrinfo(self._host, self._port, self._family,
+                                self._socktype, self._proto,
+                                self._flags)
+  File "C:\Users\samee\AppData\Local\Programs\Python\Python313\Lib\socket.py", line 977, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno 11001] getaddrinfo failed
+2026-02-20 01:49:45,755 - DEBUG - {"topologyId": {"$oid": "69977061f8e3d0a6e11996a7"}, "message": "Starting topology monitoring"}
+2026-02-20 01:49:45,756 - DEBUG - {"topologyId": {"$oid": "69977061f8e3d0a6e11996a7"}, "previousDescription": "<TopologyDescription id: 69977061f8e3d0a6e11996a7, topology_type: Unknown, servers: []>", "newDescription": "<TopologyDescription id: 69977061f8e3d0a6e11996a7, topology_type: Unknown, servers: [<ServerDescription ('mongodb', 27017) server_type: Unknown, rtt: None>]>", "message": "Topology description changed"}
+2026-02-20 01:49:45,756 - DEBUG - {"topologyId": {"$oid": "69977061f8e3d0a6e11996a7"}, "serverHost": "mongodb", "serverPort": 27017, "message": "Starting server monitoring"}
+2026-02-20 01:49:45,756 - DEBUG - {"clientId": {"$oid": "69977061f8e3d0a6e11996a7"}, "message": "Connection pool created", "serverHost": "mongodb", "serverPort": 27017}
+2026-02-20 01:49:45,757 - INFO - Connected to MongoDB.
+2026-02-20 01:49:45,758 - INFO - EventSearcher initialized with database connection.
+2026-02-20 01:49:45,962 - DEBUG - Changing event name from creating-client-class.iot-data to creating-client-class.iot-data-plane
+2026-02-20 01:49:45,964 - DEBUG - Changing event name from before-call.apigateway to before-call.api-gateway
+2026-02-20 01:49:45,965 - DEBUG - Changing event name from request-created.machinelearning.Predict to request-created.machine-learning.Predict
+2026-02-20 01:49:45,966 - DEBUG - Changing event name from before-parameter-build.autoscaling.CreateLaunchConfiguration to before-parameter-build.auto-scaling.CreateLaunchConfiguration
+2026-02-20 01:49:45,966 - DEBUG - Changing event name from before-parameter-build.route53 to before-parameter-build.route-53
+2026-02-20 01:49:45,967 - DEBUG - Changing event name from request-created.cloudsearchdomain.Search to request-created.cloudsearch-domain.Search
+2026-02-20 01:49:45,968 - DEBUG - Changing event name from docs.*.autoscaling.CreateLaunchConfiguration.complete-section to docs.*.auto-scaling.CreateLaunchConfiguration.complete-section
+2026-02-20 01:49:45,971 - DEBUG - Changing event name from before-parameter-build.logs.CreateExportTask to before-parameter-build.cloudwatch-logs.CreateExportTask
+2026-02-20 01:49:45,971 - DEBUG - Changing event name from docs.*.logs.CreateExportTask.complete-section to docs.*.cloudwatch-logs.CreateExportTask.complete-section
+2026-02-20 01:49:45,971 - DEBUG - Changing event name from before-parameter-build.cloudsearchdomain.Search to before-parameter-build.cloudsearch-domain.Search
+2026-02-20 01:49:45,971 - DEBUG - Changing event name from docs.*.cloudsearchdomain.Search.complete-section to docs.*.cloudsearch-domain.Search.complete-section
+2026-02-20 01:49:45,973 - DEBUG - Loading JSON file: C:\Users\samee\AppData\Local\Programs\Python\Python313\Lib\site-packages\botocore\data\endpoints.json
+2026-02-20 01:49:45,989 - DEBUG - Loading JSON file: C:\Users\samee\AppData\Local\Programs\Python\Python313\Lib\site-packages\botocore\data\sdk-default-configuration.json
+2026-02-20 01:49:45,990 - DEBUG - Event choose-service-name: calling handler <function handle_service_name_alias at 0x000002CF4D47AFC0>
+2026-02-20 01:49:46,046 - DEBUG - Loading JSON file: C:\Users\samee\AppData\Local\Programs\Python\Python313\Lib\site-packages\botocore\data\s3\2006-03-01\service-2.json.gz
+2026-02-20 01:49:46,108 - DEBUG - Loading JSON file: C:\Users\samee\AppData\Local\Programs\Python\Python313\Lib\site-packages\botocore\data\s3\2006-03-01\endpoint-rule-set-1.json.gz
+2026-02-20 01:49:46,123 - DEBUG - Loading JSON file: C:\Users\samee\AppData\Local\Programs\Python\Python313\Lib\site-packages\botocore\data\partitions.json
+2026-02-20 01:49:46,125 - DEBUG - Event creating-client-class.s3: calling handler <function add_generate_presigned_post at 0x000002CF4D1D9D00>
+2026-02-20 01:49:46,125 - DEBUG - Event creating-client-class.s3: calling handler <function lazy_call.<locals>._handler at 0x000002CF4D50AF20>
+2026-02-20 01:49:46,158 - DEBUG - Event creating-client-class.s3: calling handler <function add_generate_presigned_url at 0x000002CF4D1D9A80>
+2026-02-20 01:49:46,165 - DEBUG - Setting s3 timeout as (60, 60)
+2026-02-20 01:49:46,168 - DEBUG - Loading JSON file: C:\Users\samee\AppData\Local\Programs\Python\Python313\Lib\site-packages\botocore\data\_retry.json
+2026-02-20 01:49:46,168 - DEBUG - Registering retry handlers for service: s3
+2026-02-20 01:49:46,169 - DEBUG - Registering S3 region redirector handler
+2026-02-20 01:49:46,169 - DEBUG - Registering S3Express Identity Resolver
+2026-02-20 01:49:46,170 - DEBUG - {"topologyId": {"$oid": "69977062f8e3d0a6e11996a8"}, "message": "Starting topology monitoring"}
+2026-02-20 01:49:46,170 - DEBUG - {"topologyId": {"$oid": "69977062f8e3d0a6e11996a8"}, "previousDescription": "<TopologyDescription id: 69977062f8e3d0a6e11996a8, topology_type: Unknown, servers: []>", "newDescription": "<TopologyDescription id: 69977062f8e3d0a6e11996a8, topology_type: Unknown, servers: [<ServerDescription ('mongodb', 27017) server_type: Unknown, rtt: None>]>", "message": "Topology description changed"}
+2026-02-20 01:49:46,170 - DEBUG - {"topologyId": {"$oid": "69977062f8e3d0a6e11996a8"}, "serverHost": "mongodb", "serverPort": 27017, "message": "Starting server monitoring"}
+2026-02-20 01:49:46,171 - DEBUG - {"clientId": {"$oid": "69977062f8e3d0a6e11996a8"}, "message": "Connection pool created", "serverHost": "mongodb", "serverPort": 27017}
+2026-02-20 01:49:46,172 - INFO - EventSearcher initialized with database connection.
+2026-02-20 01:49:46,176 - DEBUG - Using SelectPoller
+2026-02-20 01:49:46,177 - DEBUG - Created default connection workflow <pika.adapters.utils.connection_workflow.AMQPConnectionWorkflow object at 0x000002CF4DF49A90>
+2026-02-20 01:49:46,178 - DEBUG - Starting AMQP Connection workflow asynchronously.
+2026-02-20 01:49:46,178 - DEBUG - call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x000002CF4DB53AF0> with deadline=220037.293503 and callback=functools.partial(<bound method AMQPConnectionWorkflow._start_new_cycle_async of <pika.adapters.utils.connection_workflow.AMQPConnectionWorkflow object at 0x000002CF4DF49A90>>, first=True); now=220037.293503; delay=0
+2026-02-20 01:49:46,178 - DEBUG - Beginning a new AMQP connection workflow cycle; attempts remaining after this: 0
+2026-02-20 01:49:46,179 - DEBUG - call_later: added timeout <pika.adapters.select_connection._Timeout object at 0x000002CF39A8D9F0> with deadline=220037.2943355 and callback=<bound method AMQPConnectionWorkflow._try_next_config_async of <pika.adapters.utils.connection_workflow.AMQPConnectionWorkflow object at 0x000002CF4DF49A90>>; now=220037.2943355; delay=0
+2026-02-20 01:49:46,179 - DEBUG - _try_next_config_async: 'rabbitmq':5672
+2026-02-20 01:49:53,008 - DEBUG - {"topologyId": {"$oid": "69977061f8e3d0a6e11996a7"}, "serverHost": "mongodb", "serverPort": 27017, "awaited": false, "durationMS": 7251.493899995694, "failure": "\"AutoReconnect('mongodb:27017: [Errno 11001] getaddrinfo failed (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')\"", "message": "Server heartbeat failed"}
+2026-02-20 01:49:53,009 - DEBUG - {"topologyId": {"$oid": "69977061f8e3d0a6e11996a7"}, "previousDescription": "<TopologyDescription id: 69977061f8e3d0a6e11996a7, topology_type: Unknown, servers: [<ServerDescription ('mongodb', 27017) server_type: Unknown, rtt: None>]>", "newDescription": "<TopologyDescription id: 69977061f8e3d0a6e11996a7, topology_type: Unknown, servers: [<ServerDescription ('mongodb', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('mongodb:27017: [Errno 11001] getaddrinfo failed (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>", "message": "Topology description changed"}
+2026-02-20 01:49:53,419 - DEBUG - {"topologyId": {"$oid": "69977062f8e3d0a6e11996a8"}, "serverHost": "mongodb", "serverPort": 27017, "awaited": false, "durationMS": 7247.348200005945, "failure": "\"AutoReconnect('mongodb:27017: [Errno 11001] getaddrinfo failed (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')\"", "message": "Server heartbeat failed"}
+2026-02-20 01:49:53,419 - DEBUG - {"topologyId": {"$oid": "69977062f8e3d0a6e11996a8"}, "previousDescription": "<TopologyDescription id: 69977062f8e3d0a6e11996a8, topology_type: Unknown, servers: [<ServerDescription ('mongodb', 27017) server_type: Unknown, rtt: None>]>", "newDescription": "<TopologyDescription id: 69977062f8e3d0a6e11996a8, topology_type: Unknown, servers: [<ServerDescription ('mongodb', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('mongodb:27017: [Errno 11001] getaddrinfo failed (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>", "message": "Topology description changed"}
+2026-02-20 01:49:53,435 - ERROR - Address resolution failed: gaierror(11001, 'getaddrinfo failed')
+2026-02-20 01:49:53,436 - DEBUG - add_callback_threadsafe: added callback=<bound method _AddressResolver._dispatch_result of <pika.adapters.utils.selector_ioloop_adapter._AddressResolver object at 0x000002CF4DF49BE0>>
+2026-02-20 01:49:53,436 - DEBUG - process_timeouts: invoking callback=<bound method _AddressResolver._dispatch_result of <pika.adapters.utils.selector_ioloop_adapter._AddressResolver object at 0x000002CF4DF49BE0>>
+2026-02-20 01:49:53,436 - DEBUG - Invoking asynchronous getaddrinfo() completion callback; host='rabbitmq'
+2026-02-20 01:49:53,436 - ERROR - getaddrinfo failed: gaierror(11001, 'getaddrinfo failed').
+2026-02-20 01:49:53,436 - ERROR - AMQP connection workflow failed: AMQPConnectionWorkflowFailed: 1 exceptions in all; last exception - gaierror(11001, 'getaddrinfo failed'); first exception - None.
+2026-02-20 01:49:53,436 - ERROR - AMQPConnectionWorkflow - reporting failure: AMQPConnectionWorkflowFailed: 1 exceptions in all; last exception - gaierror(11001, 'getaddrinfo failed'); first exception - None
+2026-02-20 01:49:53,436 - ERROR - Connection workflow failed: AMQPConnectionWorkflowFailed: 1 exceptions in all; last exception - gaierror(11001, 'getaddrinfo failed'); first exception - None
+2026-02-20 01:49:53,436 - ERROR - Error in _create_connection().
+Traceback (most recent call last):
+  File "C:\Users\samee\AppData\Local\Programs\Python\Python313\Lib\site-packages\pika\adapters\blocking_connection.py", line 451, in _create_connection
+    raise self._reap_last_connection_workflow_error(error)
+  File "C:\Users\samee\AppData\Local\Programs\Python\Python313\Lib\site-packages\pika\adapters\utils\selector_ioloop_adapter.py", line 565, in _resolve
+    result = socket.getaddrinfo(self._host, self._port, self._family,
+                                self._socktype, self._proto,
+                                self._flags)
+  File "C:\Users\samee\AppData\Local\Programs\Python\Python313\Lib\socket.py", line 977, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno 11001] getaddrinfo failed
+2026-02-20 01:50:18,078 - DEBUG - {"topologyId": {"$oid": "699770823c498f6845076521"}, "message": "Starting topology monitoring"}
+2026-02-20 01:50:18,078 - DEBUG - {"topologyId": {"$oid": "699770823c498f6845076521"}, "previousDescription": "<TopologyDescription id: 699770823c498f6845076521, topology_type: Unknown, servers: []>", "newDescription": "<TopologyDescription id: 699770823c498f6845076521, topology_type: Unknown, servers: [<ServerDescription ('mongodb', 27017) server_type: Unknown, rtt: None>]>", "message": "Topology description changed"}
+2026-02-20 01:50:18,079 - DEBUG - {"topologyId": {"$oid": "699770823c498f6845076521"}, "serverHost": "mongodb", "serverPort": 27017, "message": "Starting server monitoring"}
+2026-02-20 01:50:18,079 - DEBUG - {"clientId": {"$oid": "699770823c498f6845076521"}, "message": "Connection pool created", "serverHost": "mongodb", "serverPort": 27017}
+2026-02-20 01:50:18,081 - INFO - Connected to MongoDB.
+2026-02-20 01:50:18,081 - INFO - EventSearcher initialized with database connection.
