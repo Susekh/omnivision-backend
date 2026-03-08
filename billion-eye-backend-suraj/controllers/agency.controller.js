@@ -540,12 +540,12 @@ async function loginGroundStaff(req, res) {
       });
     }
 
-    // Call the model function to handle groundstaff login
+    // Call the model function
     const result = await AgencyModel.groundStaffLogin(mobileNumber, password);
 
     console.log(
       "[loginGroundStaff] Login successful for groundStaff:",
-      result.groundStaff.number,
+      result.groundStaff.number
     );
 
     // Generate JWT token
@@ -554,14 +554,14 @@ async function loginGroundStaff(req, res) {
         groundStaffId: result.groundStaff._id,
         mobileNumber: result.groundStaff.number,
         agencyId: result.groundStaff.agencyId,
+        agencyName: result.groundStaff.agencyName,
       },
       JWT_SECRET,
-      { expiresIn: JWT_EXPIRATION },
+      { expiresIn: JWT_EXPIRATION }
     );
 
     console.log("[loginGroundStaff] Token generated successfully.");
 
-    // Send success response with token
     return res.status(200).json({
       success: true,
       message: "Login successful.",
@@ -571,10 +571,12 @@ async function loginGroundStaff(req, res) {
         name: result.groundStaff.name,
         number: result.groundStaff.number,
         agencyId: result.groundStaff.agencyId,
+        agencyName: result.groundStaff.agencyName, // ✅ required for frontend
       },
     });
   } catch (error) {
     console.error("[loginGroundStaff] Error:", error.message);
+
     return res.status(401).json({
       success: false,
       message: error.message || "Login failed.",
