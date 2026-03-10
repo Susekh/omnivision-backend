@@ -2,7 +2,7 @@ const AgencyModel = require("../models/agency.model");
 console.log(AgencyModel);
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const JWT_SECRET = process.env.JWT_SECRET || "your_secret_key"; // Use a secure secret key
+const JWT_SECRET = process.env.JWT_PRIVATE_KEY || "your_secret_key"; // Use a secure secret key
 const JWT_EXPIRATION = "1h"; // Token expiration time (e.g., 1 hour)
 // Create A New Agency
 async function createAgency(req, res) {

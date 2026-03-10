@@ -8,6 +8,7 @@ const cors = require('cors');
 const connectToDb = require('./Db/db')
 const userRoutes = require('./routes/user.routes');
 const agencyRoutes = require('./routes/agency.router');
+const adminRoutes = require('./routes/admin.routes');
 // Middleware (order matters!)
 const bodyParser = require('body-parser');
 const { switchModel, getActiveModelController } = require('./controllers/model.controller');
@@ -45,6 +46,7 @@ app.listen(port, () => {
   console.log(`HTTPS Server is running on port ${port}`);
 });
 app.use('/backend/user', userRoutes);
+app.use('/backend/admin', adminRoutes); // new admin endpoints
 // app.use('/agencies',agencyRoutes);
 app.use('/backend',agencyRoutes);
 app.post('/backend/switch-model', switchModel);

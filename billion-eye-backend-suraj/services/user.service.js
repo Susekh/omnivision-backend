@@ -17,12 +17,11 @@ module.exports = {
             throw new Error('User already exists');
         }
 
-        // Hash the password and save the user
-        const hashedPassword = await bcrypt.hash(password, 10);
+        // Do NOT hash here; the model will handle hashing to avoid double-hashing
         const newUser = await userModel.registerUser({
             fullname,
             email,
-            password: hashedPassword,
+            password,
         });
 
         return newUser; // Return the newly created user ID

@@ -62,25 +62,15 @@ async function getUserByEmail(email) {
 // Ignore this function
 async function loginUser(email, password) {
     console.log('Login attempt with email:', email);
-    console.log(password);
     const collection = await getUserCollection();
-    
+
     const user = await collection.findOne({ email });
     if (!user) {
         console.error('User not found for email:', email);
         throw new Error('Invalid email or password');
     }
-    
-    console.log('Stored hashed password:', user.password);
-    console.log('Entered password:', password);
 
-    // const isPasswordValid = await bcrypt.compare(user.password);
-    // console.log()
-    const isPasswordValid = user.password ;
-    // console.log(isPasswordValid);
-    // console.log('Password match result:', password);
-
-
+    const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
         console.error('Password mismatch for user:', email);
         throw new Error('Invalid email or password');
