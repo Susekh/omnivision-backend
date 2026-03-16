@@ -23,16 +23,28 @@ app.use(cookieParser());
 
 connectToDb();
 const port = process.env.PORT || 5000;
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "http://localhost:8080",
+  "https://omnivision.neuradyne.in",
+  "https://www.omnivision.neuradyne.in",
+  "https://omnivision-frontend.vercel.app",
+];
+
+// Add environment variable for additional origins if needed
+if (process.env.ALLOWED_ORIGINS) {
+  allowedOrigins.push(...process.env.ALLOWED_ORIGINS.split(","));
+}
+
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:3000",
-      "https://omnivision.neuradyne.in",
-      "https://omnivision-frontend.vercel.app",
-    ],
+    origin: allowedOrigins,
     credentials: true,
-  }),
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
 );
 app.use(express.json({ limit: "150mb" }));
 app.use(express.urlencoded({ limit: "150mb", extended: true }));
