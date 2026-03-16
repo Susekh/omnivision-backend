@@ -6,8 +6,8 @@ module.exports = (req, res, next) => {
 
     if (authHeader && authHeader.startsWith('Bearer ')) {
         token = authHeader.split(' ')[1];
-    } else if (req.cookies && req.cookies.agency_token) {
-        token = req.cookies.agency_token;
+    } else if (req.cookies && (req.cookies.admin_token || req.cookies.agency_token)) {
+        token = req.cookies.admin_token || req.cookies.agency_token;
     }
 
     if (!token) {
@@ -16,10 +16,10 @@ module.exports = (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_PRIVATE_KEY);
-        if (decoded.role !== 'agency') {
-            return res.status(403).json({ message: 'Access denied. Agencies only.' });
+        if (decoded.role !== 'admin' && decoded.role !== 'agency') {
+            return res.status(403).json({ message: 'Access denied. Admin or Agency access required.' });
         }
-        req.agency = decoded;
+        req.user = decoded; // Attach to req.user for consistency
         next();
     } catch (err) {
         return res.status(400).json({ message: 'Invalid token' });

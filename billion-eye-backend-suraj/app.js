@@ -11,13 +11,19 @@ const agencyRoutes = require('./routes/agency.router');
 const adminRoutes = require('./routes/admin.routes');
 // Middleware (order matters!)
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
 const { switchModel, getActiveModelController } = require('./controllers/model.controller');
+const authAdmin = require('./middlewares/auth.admin');
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+app.use(cookieParser());
 
 connectToDb();
 const port = process.env.PORT || 5000;
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:5173', 'http://localhost:3000', 'https://omnivision.neuradyne.in'],
+  credentials: true
+}));
 app.use(express.json({ limit: '150mb' }));
 app.use(express.urlencoded({ limit: '150mb', extended: true }));
 /*********************************************************************************** */
@@ -49,8 +55,8 @@ app.use('/backend/user', userRoutes);
 app.use('/backend/admin', adminRoutes); // new admin endpoints
 // app.use('/agencies',agencyRoutes);
 app.use('/backend',agencyRoutes);
-app.post('/backend/switch-model', switchModel);
-app.get("/backend/active-model", getActiveModelController);
+app.post('/backend/switch-model', authAdmin, switchModel);
+app.get("/backend/active-model", authAdmin, getActiveModelController);
 
 // app.use('/images', imageRoutes);
 app.get('/backend',(req, res) => {

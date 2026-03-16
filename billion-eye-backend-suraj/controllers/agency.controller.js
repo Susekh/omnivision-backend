@@ -117,23 +117,23 @@ async function loginAgency(req, res) {
       result.agency.AgencyId,
     );
 
-    // Generate JWT token
-    const token = jwt.sign(
-      {
-        AgencyId: result.agency.AgencyId,
-        mobileNumber: result.agency.mobileNumber,
-      },
-      JWT_SECRET,
-      { expiresIn: JWT_EXPIRATION },
-    );
+    // Use the token from the model (which includes role)
+    const token = result.token;
 
-    console.log("[loginAgency] Token generated successfully.");
+    console.log("[loginAgency] Token retrieved successfully.");
+
+    // Set token in cookie
+    res.cookie('agency_token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'Strict',
+        maxAge: 60 * 60 * 1000 // 1 hour, matching JWT_EXPIRATION
+    });
 
     // Send success response with token
     return res.status(200).json({
       success: true,
       message: "Login successful.",
-      token, // Include the token in the response
       agency: result.agency,
     });
   } catch (error) {
@@ -147,23 +147,12 @@ async function loginAgency(req, res) {
 // Logout Controller
 async function logoutAgency(req, res) {
   try {
-    const token = req.headers.authorization?.split(" ")[1]; // Extract token from Authorization header
-
-    if (!token) {
-      return res.status(400).json({
-        success: false,
-        message: "Token is required for logout.",
-      });
-    }
-
-    // Optionally, invalidate the token (e.g., add it to a blacklist)
-    console.log("[logoutAgency] Invalidating token:", token);
-
-    // Clear token from client-side (if using cookies)
+    // Clear the agency token cookie
     res.clearCookie("agency_token", {
       httpOnly: true,
       sameSite: "Strict",
       secure: process.env.NODE_ENV === "production",
+      path: "/"
     });
 
     return res.status(200).json({
@@ -172,6 +161,30 @@ async function logoutAgency(req, res) {
     });
   } catch (error) {
     console.error("[logoutAgency] Error:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Logout failed.",
+    });
+  }
+}
+
+// Logout Groundstaff Controller
+async function logoutGroundstaff(req, res) {
+  try {
+    // Clear the groundstaff token cookie
+    res.clearCookie("groundstaff_token", {
+      httpOnly: true,
+      sameSite: "Strict",
+      secure: process.env.NODE_ENV === "production",
+      path: "/"
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Logged out successfully.",
+    });
+  } catch (error) {
+    console.error("[logoutGroundstaff] Error:", error.message);
     return res.status(500).json({
       success: false,
       message: error.message || "Logout failed.",
@@ -555,6 +568,7 @@ async function loginGroundStaff(req, res) {
         mobileNumber: result.groundStaff.number,
         agencyId: result.groundStaff.agencyId,
         agencyName: result.groundStaff.agencyName,
+        role: 'groundstaff',
       },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRATION }
@@ -562,16 +576,23 @@ async function loginGroundStaff(req, res) {
 
     console.log("[loginGroundStaff] Token generated successfully.");
 
+    // Set token in cookie
+    res.cookie('groundstaff_token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'Strict',
+        maxAge: 60 * 60 * 1000 // 1 hour, matching JWT_EXPIRATION
+    });
+
     return res.status(200).json({
       success: true,
       message: "Login successful.",
-      token,
       groundStaff: {
         id: result.groundStaff._id,
         name: result.groundStaff.name,
         number: result.groundStaff.number,
         agencyId: result.groundStaff.agencyId,
-        agencyName: result.groundStaff.agencyName, // ✅ required for frontend
+        agencyName: result.groundStaff.agencyName,
       },
     });
   } catch (error) {
@@ -874,6 +895,7 @@ module.exports = {
   getGroundStaffByAgency,
   getGroundStaffTasks,
   logoutAgency,
+  logoutGroundstaff,
   // addGroundStaff,
   // deleteIncident,
   resetPasswordAgency,

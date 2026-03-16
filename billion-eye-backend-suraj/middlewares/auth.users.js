@@ -5,20 +5,21 @@ module.exports = (req, res, next) => {
     console.log('Incoming request to:', req.path); // Log the requested endpoint
     console.log('Authorization Header:', req.header('Authorization')); // Log the Authorization header
 
+    let token;
     const authHeader = req.header('Authorization');
 
-    if (!authHeader) {
-        console.log('Authorization header missing'); // Log missing Authorization header
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.split(' ')[1];
+    } else if (req.cookies && req.cookies.user_token) {
+        token = req.cookies.user_token;
+    }
+
+    if (!token) {
+        console.log('No token found in header or cookie'); // Log missing token
         return res.status(401).json({ message: 'Access Denied. No token provided.' });
     }
 
-    const token = authHeader.split(' ')[1];
     console.log('Extracted Token:', token); // Log the extracted token
-
-    if (!token) {
-        console.log('Token format invalid'); // Log invalid token format
-        return res.status(401).json({ message: 'Invalid token format.' });
-    }
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_PRIVATE_KEY);

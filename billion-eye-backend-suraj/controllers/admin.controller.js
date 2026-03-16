@@ -6,10 +6,18 @@ module.exports = {
         try {
             const adminId = await adminService.registerAdmin({ fullname, email, password });
             const token = adminService.generateAuthToken(adminId);
+
+            // Set token in cookie
+            res.cookie('admin_token', token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'Strict',
+                maxAge: 24 * 60 * 60 * 1000 // 24 hours
+            });
+
             res.status(201).json({
                 message: 'Admin registered',
                 adminId,
-                token: `Bearer ${token}`,
             });
         } catch (err) {
             res.status(400).json({ message: err.message });
@@ -20,9 +28,17 @@ module.exports = {
         const { email, password } = req.body;
         try {
             const { token, admin } = await adminService.loginAdmin(email, password);
+
+            // Set token in cookie
+            res.cookie('admin_token', token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'Strict',
+                maxAge: 24 * 60 * 60 * 1000 // 24 hours
+            });
+
             res.status(200).json({
                 message: 'Admin logged in successfully',
-                token,
                 admin: {
                     id: admin._id,
                     fullname: admin.fullname,
@@ -36,15 +52,12 @@ module.exports = {
 
     logoutAdmin: async (req, res) => {
         try {
-            const token = req.headers.authorization?.split(' ')[1];
-            if (!token) {
-                return res.status(400).json({ message: 'Token is required for logout' });
-            }
-            // optional: add to blacklist or keep in a store
+            // Clear the admin token cookie
             res.clearCookie('admin_token', {
                 httpOnly: true,
-                sameSite: 'Strict',
                 secure: process.env.NODE_ENV === 'production',
+                sameSite: 'Strict',
+                path: '/'
             });
             return res.status(200).json({ message: 'Logged out successfully' });
         } catch (error) {

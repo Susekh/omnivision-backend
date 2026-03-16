@@ -31,8 +31,16 @@ module.exports.registerUser = async (req, res) => {
         // Generate the JWT token
         const token = userService.generateAuthToken(userId);
 
+        // Set token in cookie
+        res.cookie('user_token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'Strict',
+            maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        });
+
         // Send success response
-        res.status(201).json({ message: 'User registered successfully', userId ,token: `Bearer ${token}`});
+        res.status(201).json({ message: 'User registered successfully', userId });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -45,9 +53,16 @@ module.exports.loginUser = async (req, res) => {
     try {
         const { token, user } = await userService.loginUser(email, password);
 
+        // Set token in cookie
+        res.cookie('user_token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'Strict',
+            maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        });
+
         res.status(200).json({
             message: 'User logged in successfully',
-            token,
             user: {
                 id: user._id,
                 fullname: user.fullname,
@@ -59,6 +74,20 @@ module.exports.loginUser = async (req, res) => {
     }
 };
 
+module.exports.logoutUser = async (req, res) => {
+    try {
+        // Clear the user token cookie
+        res.clearCookie('user_token', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'Strict',
+            path: '/'
+        });
+        return res.status(200).json({ message: 'Logged out successfully' });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+};
 
 module.exports.uploadImage = async (req, res) => {
     try {

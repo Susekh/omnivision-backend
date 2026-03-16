@@ -33,8 +33,23 @@ router.post(
   userController.loginUser
 );
 
+// Check Authentication Route
+router.get("/check-auth", auth, (req, res) => {
+  res.status(200).json({
+    message: 'Authenticated',
+    user: {
+      id: req.user._id,
+      email: req.user.email,
+      fullname: req.user.fullname || 'User'
+    }
+  });
+});
+
+// User Logout Route
+router.post("/logout", auth, userController.logoutUser);
+
 // Image Upload Route
-router.post("/upload-image", multer.single("image"), uploadImage);
+router.post("/upload-image", auth, multer.single("image"), uploadImage);
 
 // Save Image Route
 router.post(
@@ -67,5 +82,5 @@ router.get("/protected", auth, (req, res) => {
 
 
 // Get All Incidents Route
-router.get('/incidents', getAllincdents);
+router.get('/incidents', auth, getAllincdents);
 module.exports = router;
