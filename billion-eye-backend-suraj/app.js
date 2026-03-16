@@ -1,31 +1,41 @@
-const express = require('express');
+const express = require("express");
 const app = express();
-const dotenv = require('dotenv');
-const path = require('path');
-const auditLog = require('./middlewares/auditLog')
-dotenv.config(); 
-const cors = require('cors');
-const connectToDb = require('./Db/db')
-const userRoutes = require('./routes/user.routes');
-const agencyRoutes = require('./routes/agency.router');
-const adminRoutes = require('./routes/admin.routes');
+const dotenv = require("dotenv");
+const path = require("path");
+const auditLog = require("./middlewares/auditLog");
+dotenv.config();
+const cors = require("cors");
+const connectToDb = require("./Db/db");
+const userRoutes = require("./routes/user.routes");
+const agencyRoutes = require("./routes/agency.router");
+const adminRoutes = require("./routes/admin.routes");
 // Middleware (order matters!)
-const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser');
-const { switchModel, getActiveModelController } = require('./controllers/model.controller');
-const authAdmin = require('./middlewares/auth.admin');
-app.use(bodyParser.json({ limit: '50mb' }));
-app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+const bodyParser = require("body-parser");
+const cookieParser = require("cookie-parser");
+const {
+  switchModel,
+  getActiveModelController,
+} = require("./controllers/model.controller");
+const authAdmin = require("./middlewares/auth.admin");
+app.use(bodyParser.json({ limit: "50mb" }));
+app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 app.use(cookieParser());
 
 connectToDb();
 const port = process.env.PORT || 5000;
-app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000', 'https://omnivision.neuradyne.in'],
-  credentials: true
-}));
-app.use(express.json({ limit: '150mb' }));
-app.use(express.urlencoded({ limit: '150mb', extended: true }));
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:3000",
+      "https://omnivision.neuradyne.in",
+      "https://omnivision-frontend.vercel.app",
+    ],
+    credentials: true,
+  }),
+);
+app.use(express.json({ limit: "150mb" }));
+app.use(express.urlencoded({ limit: "150mb", extended: true }));
 /*********************************************************************************** */
 // // Middleware to set security headers
 // app.use((req, res, next) => {
@@ -43,7 +53,7 @@ app.use(express.urlencoded({ limit: '150mb', extended: true }));
 
 app.use(auditLog);
 app.use((req, res, next) => {
-  console.log('Request content length:', req.headers['content-length']);
+  console.log("Request content length:", req.headers["content-length"]);
   next();
 });
 
@@ -51,17 +61,16 @@ app.use((req, res, next) => {
 app.listen(port, () => {
   console.log(`HTTPS Server is running on port ${port}`);
 });
-app.use('/backend/user', userRoutes);
-app.use('/backend/admin', adminRoutes); // new admin endpoints
+app.use("/backend/user", userRoutes);
+app.use("/backend/admin", adminRoutes); // new admin endpoints
 // app.use('/agencies',agencyRoutes);
-app.use('/backend',agencyRoutes);
-app.post('/backend/switch-model', authAdmin, switchModel);
+app.use("/backend", agencyRoutes);
+app.post("/backend/switch-model", authAdmin, switchModel);
 app.get("/backend/active-model", authAdmin, getActiveModelController);
 
 // app.use('/images', imageRoutes);
-app.get('/backend',(req, res) => {
+app.get("/backend", (req, res) => {
   res.send("Hey Server is Running");
-  
-})
+});
 
 module.exports = app;
